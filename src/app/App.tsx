@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
 import { Wizard } from "./components/Wizard";
+import { LanguageCode, NavMenu, ThemeMode } from "./components/NavMenu";
 
 const themes = {
   dark: {
@@ -28,20 +29,131 @@ const themes = {
   },
 };
 
+const copy: Record<
+  LanguageCode,
+  {
+    headline: string;
+    accent: string;
+    sub: string;
+    cta: string;
+    hint: string;
+  }
+> = {
+  ru: {
+    headline: "Создайте расписание,",
+    accent: "пока не остыл кофе",
+    sub: "Минимум настроек, максимум учёта. Shifty учитывает ограничения и автоматически генерирует смены с учётом всех условий и пожеланий команды. Создайте первое расписание за пару минут.",
+    cta: "Попробовать",
+    hint: "Бесплатно и без регистрации",
+  },
+  en: {
+    headline: "Build a schedule",
+    accent: "before the coffee cools",
+    sub: "Fewer settings, better coverage. Shifty respects constraints and generates shifts around team rules, limits, and preferences in minutes.",
+    cta: "Try it",
+    hint: "Free, no signup required",
+  },
+  kk: {
+    headline: "Кестені жасаңыз,",
+    accent: "кофе суымай тұрғанда",
+    sub: "Аз баптау, нақты есеп. Shifty шектеулерді ескеріп, команданың шарттары мен тілектеріне сай ауысымдарды автоматты түрде құрады.",
+    cta: "Байқап көру",
+    hint: "Тегін және тіркеусіз",
+  },
+  de: {
+    headline: "Plane Schichten,",
+    accent: "bevor der Kaffee kalt wird",
+    sub: "Weniger Einstellungen, mehr Überblick. Shifty berücksichtigt Regeln, Grenzen und Wünsche des Teams und erstellt Schichten in wenigen Minuten.",
+    cta: "Ausprobieren",
+    hint: "Kostenlos und ohne Registrierung",
+  },
+  fr: {
+    headline: "Créez un planning",
+    accent: "avant que le café refroidisse",
+    sub: "Moins de réglages, plus de précision. Shifty tient compte des contraintes et génère les shifts selon les règles et préférences de l’équipe.",
+    cta: "Essayer",
+    hint: "Gratuit, sans inscription",
+  },
+  es: {
+    headline: "Crea un horario",
+    accent: "antes de que se enfríe el café",
+    sub: "Menos ajustes, mejor cobertura. Shifty respeta restricciones y genera turnos según las reglas, límites y preferencias del equipo.",
+    cta: "Probar",
+    hint: "Gratis y sin registro",
+  },
+  it: {
+    headline: "Crea un calendario",
+    accent: "prima che il caffè si raffreddi",
+    sub: "Meno impostazioni, più controllo. Shifty considera vincoli e preferenze del team e genera i turni in pochi minuti.",
+    cta: "Prova",
+    hint: "Gratis, senza registrazione",
+  },
+  pt: {
+    headline: "Crie uma escala",
+    accent: "antes do café esfriar",
+    sub: "Menos configuração, mais cobertura. O Shifty respeita restrições e gera turnos conforme regras, limites e preferências da equipe.",
+    cta: "Experimentar",
+    hint: "Grátis, sem cadastro",
+  },
+  tr: {
+    headline: "Vardiya planını hazırla,",
+    accent: "kahve soğumadan",
+    sub: "Daha az ayar, daha iyi plan. Shifty kısıtları dikkate alır ve ekip kurallarına, limitlerine ve tercihlerine göre vardiyaları oluşturur.",
+    cta: "Dene",
+    hint: "Ücretsiz, kayıt gerekmez",
+  },
+  zh: {
+    headline: "快速创建排班，",
+    accent: "趁咖啡还没凉",
+    sub: "更少设置，更好统筹。Shifty 会考虑限制条件，并根据团队规则、边界和偏好自动生成班次。",
+    cta: "试试看",
+    hint: "免费，无需注册",
+  },
+  ja: {
+    headline: "シフト表を作成、",
+    accent: "コーヒーが冷める前に",
+    sub: "設定は少なく、調整はしっかり。Shifty は制約やチームのルール、希望を考慮してシフトを自動生成します。",
+    cta: "試してみる",
+    hint: "無料、登録不要",
+  },
+};
+
 export default function App() {
-  const [dark, setDark] = useState(() =>
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem("shifty-theme");
+    return saved === "dark" || saved === "light" || saved === "system" ? saved : "system";
+  });
+  const [language, setLanguage] = useState<LanguageCode>(() => {
+    const saved = localStorage.getItem("shifty-language");
+    return saved && saved in copy ? (saved as LanguageCode) : "ru";
+  });
+  const [systemDark, setSystemDark] = useState(() =>
     window.matchMedia("(prefers-color-scheme: dark)").matches
   );
   const [wizardOpen, setWizardOpen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    const handler = (e: MediaQueryListEvent) => setDark(e.matches);
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
   }, []);
 
+  const dark =
+    themeMode === "dark" ? true : themeMode === "light" ? false : systemDark;
+
   const t = dark ? themes.dark : themes.light;
+  const text = copy[language];
+
+  useEffect(() => {
+    localStorage.setItem("shifty-theme", themeMode);
+    document.documentElement.classList.toggle("dark", dark);
+  }, [themeMode, dark]);
+
+  useEffect(() => {
+    localStorage.setItem("shifty-language", language);
+    document.documentElement.lang = language;
+  }, [language]);
 
   return (
     <div
@@ -74,7 +186,7 @@ export default function App() {
       />
 
       {/* Nav */}
-      <nav className="relative flex items-center justify-between px-6 md:px-14 py-5" style={{ zIndex: 10 }}>
+      <nav className="relative flex items-center justify-between px-6 md:px-14 py-5" style={{ zIndex: 4000 }}>
         <div className="flex items-center gap-2.5">
           <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
             <rect x="2" y="2" width="10" height="6" rx="2" fill="url(#s1)" />
@@ -99,14 +211,13 @@ export default function App() {
           </span>
         </div>
 
-        <a
-          href="#"
-          style={{ color: t.login, fontSize: "0.875rem", textDecoration: "none", transition: "color 0.15s" }}
-          onMouseEnter={(e) => ((e.target as HTMLElement).style.color = t.loginHover)}
-          onMouseLeave={(e) => ((e.target as HTMLElement).style.color = t.login)}
-        >
-          Войти
-        </a>
+        <NavMenu
+          dark={dark}
+          theme={themeMode}
+          language={language}
+          onThemeChange={setThemeMode}
+          onLanguageChange={setLanguage}
+        />
       </nav>
 
       {/* Hero */}
@@ -132,7 +243,7 @@ export default function App() {
               transition: "color 0.3s",
             }}
           >
-            Создайте расписание,{" "}
+            {text.headline}{" "}
             <span
               style={{
                 fontStyle: "italic",
@@ -141,7 +252,7 @@ export default function App() {
                 WebkitTextFillColor: "transparent",
               }}
             >
-              пока не остыл кофе
+              {text.accent}
             </span>
           </h1>
         </motion.div>
@@ -160,7 +271,7 @@ export default function App() {
             transition: "color 0.3s",
           }}
         >
-          Минимум настроек, максимум учёта. Shifty учитывает ограничения и автоматически генерирует смены с учётом всех условий и пожеланий команды. Создайте первое расписание за пару минут.
+          {text.sub}
         </motion.p>
 
         <motion.div
@@ -207,11 +318,11 @@ export default function App() {
               el.style.filter = "brightness(1)";
             }}
           >
-            Попробовать
+            {text.cta}
             <ArrowRight size={15} strokeWidth={2} />
           </button>
           <span style={{ color: t.hint, fontSize: "0.78rem", fontWeight: 400, letterSpacing: "0.01em", transition: "color 0.3s" }}>
-            Бесплатно и без регистрации
+            {text.hint}
           </span>
         </motion.div>
       </main>
