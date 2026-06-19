@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Trash2, ChevronDown, AlertCircle } from "lucide-react";
+import type { LanguageCode } from "./NavMenu";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type WorkMode = "daily" | "weekly" | "custom";
@@ -27,9 +28,228 @@ export function hasInvalidShiftTimes(data: Step3Data) {
   return data.configs.some(config => config.shifts.some(shift => invalidTimeRange(shift.from, shift.to)));
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const WEEK = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
+// ─── Copy ─────────────────────────────────────────────────────────────────────
+type S3Copy = {
+  weekDays: readonly [string,string,string,string,string,string,string];
+  dayPrefix: string; daySuffix: string;
+  scheduleTitle: string; scheduleHow: string;
+  everyday: string; byWeekday: string; customCycle: string;
+  workdaysLabel: string; cycleHint: string;
+  workDay: string; dayOff: string;
+  shiftsTitle: string; shiftsDesc: string;
+  rolesHintPre: string; rolesHintPost: string; stepLink: string;
+  activeDaysLabel: string;
+  shiftsLabel: string; shiftsEmpty: string;
+  deleteGroup: string; addShift: string; addGroup: string;
+  roleInShift: string; noRole: string; timeError: string;
+};
 
+const s3Copy: Record<LanguageCode, S3Copy> = {
+  ru: {
+    weekDays: ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"],
+    dayPrefix: "", daySuffix: "-й",
+    scheduleTitle: "График работы", scheduleHow: "Как работает бизнес?",
+    everyday: "Каждый день", byWeekday: "По дням недели", customCycle: "Свой цикл",
+    workdaysLabel: "Рабочие дни",
+    cycleHint: "Составьте чередование рабочих и выходных. Например: 2 рабочих → 2 выходных. Максимум — 7 дней.",
+    workDay: "Рабочий день", dayOff: "Выходной день",
+    shiftsTitle: "Смены",
+    shiftsDesc: "Если в один блок выходят несколько должностей — добавьте отдельную смену для каждой роли.",
+    rolesHintPre: "Можно назначать разные роли для смен. Добавьте роли на",
+    rolesHintPost: ".", stepLink: "шаге 1",
+    activeDaysLabel: "Дни, для которых действует эта группа смен",
+    shiftsLabel: "Смены", shiftsEmpty: "Смен нет — добавьте первую",
+    deleteGroup: "Удалить группу", addShift: "Добавить смену", addGroup: "Добавить группу смен",
+    roleInShift: "Роль в смене…", noRole: "— без роли",
+    timeError: "Время окончания должно быть позже начала",
+  },
+  en: {
+    weekDays: ["Mo","Tu","We","Th","Fr","Sa","Su"],
+    dayPrefix: "", daySuffix: "",
+    scheduleTitle: "Work schedule", scheduleHow: "How does the business operate?",
+    everyday: "Every day", byWeekday: "By day of week", customCycle: "Custom cycle",
+    workdaysLabel: "Working days",
+    cycleHint: "Build a pattern of working and off days. E.g.: 2 work → 2 off. Maximum 7 days total.",
+    workDay: "Work day", dayOff: "Day off",
+    shiftsTitle: "Shifts",
+    shiftsDesc: "If multiple roles work in the same time block, add a separate shift for each role.",
+    rolesHintPre: "You can assign different roles to shifts. Add roles in",
+    rolesHintPost: ".", stepLink: "step 1",
+    activeDaysLabel: "Days this shift group applies to",
+    shiftsLabel: "Shifts", shiftsEmpty: "No shifts yet — add the first one",
+    deleteGroup: "Delete group", addShift: "Add shift", addGroup: "Add shift group",
+    roleInShift: "Shift role…", noRole: "— no role",
+    timeError: "End time must be later than start time",
+  },
+  kk: {
+    weekDays: ["Дс","Сс","Ср","Бс","Жм","Сб","Жк"],
+    dayPrefix: "", daySuffix: "",
+    scheduleTitle: "Жұмыс кестесі", scheduleHow: "Бизнес қалай жұмыс істейді?",
+    everyday: "Күн сайын", byWeekday: "Апта күні бойынша", customCycle: "Өз цикл",
+    workdaysLabel: "Жұмыс күндері",
+    cycleHint: "Жұмыс және демалыс күндерінің кезектесуін жасаңыз. Мысалы: 2 жұмыс → 2 демалыс. Максимум — 7 күн.",
+    workDay: "Жұмыс күні", dayOff: "Демалыс күні",
+    shiftsTitle: "Ауысымдар",
+    shiftsDesc: "Бір уақыт блогында бірнеше қызмет болса — әр рөлге жеке ауысым қосыңыз.",
+    rolesHintPre: "Ауысымдарға әртүрлі рөлдер тағайындауға болады. Рөлдерді",
+    rolesHintPost: "қосыңыз.", stepLink: "1-қадамда",
+    activeDaysLabel: "Бұл ауысым тобы қолданылатын күндер",
+    shiftsLabel: "Ауысымдар", shiftsEmpty: "Ауысым жоқ — бірінші қосыңыз",
+    deleteGroup: "Топты жою", addShift: "Ауысым қосу", addGroup: "Ауысым тобын қосу",
+    roleInShift: "Ауысымдағы рөл…", noRole: "— рөлсіз",
+    timeError: "Аяқталу уақыты басталу уақытынан кейін болуы керек",
+  },
+  de: {
+    weekDays: ["Mo","Di","Mi","Do","Fr","Sa","So"],
+    dayPrefix: "", daySuffix: ".",
+    scheduleTitle: "Arbeitsplan", scheduleHow: "Wie arbeitet das Unternehmen?",
+    everyday: "Jeden Tag", byWeekday: "Nach Wochentag", customCycle: "Eigener Zyklus",
+    workdaysLabel: "Arbeitstage",
+    cycleHint: "Erstellen Sie ein Muster aus Arbeits- und freien Tagen. Bsp: 2 Arbeit → 2 frei. Max. 7 Tage.",
+    workDay: "Arbeitstag", dayOff: "Freier Tag",
+    shiftsTitle: "Schichten",
+    shiftsDesc: "Wenn mehrere Rollen im selben Zeitblock arbeiten, fügen Sie für jede Rolle eine separate Schicht hinzu.",
+    rolesHintPre: "Sie können Schichten verschiedene Rollen zuweisen. Fügen Sie Rollen in",
+    rolesHintPost: "hinzu.", stepLink: "Schritt 1",
+    activeDaysLabel: "Tage, für die diese Schichtgruppe gilt",
+    shiftsLabel: "Schichten", shiftsEmpty: "Noch keine Schichten — erste hinzufügen",
+    deleteGroup: "Gruppe löschen", addShift: "Schicht hinzufügen", addGroup: "Schichtgruppe hinzufügen",
+    roleInShift: "Rolle in der Schicht…", noRole: "— ohne Rolle",
+    timeError: "Endzeit muss nach Startzeit liegen",
+  },
+  fr: {
+    weekDays: ["Lu","Ma","Me","Je","Ve","Sa","Di"],
+    dayPrefix: "", daySuffix: "",
+    scheduleTitle: "Horaire de travail", scheduleHow: "Comment l'entreprise fonctionne-t-elle ?",
+    everyday: "Tous les jours", byWeekday: "Par jour de la semaine", customCycle: "Cycle personnalisé",
+    workdaysLabel: "Jours ouvrables",
+    cycleHint: "Construisez une alternance de jours de travail et de repos. Ex : 2 travail → 2 repos. Max 7 jours.",
+    workDay: "Jour de travail", dayOff: "Jour de repos",
+    shiftsTitle: "Shifts",
+    shiftsDesc: "Si plusieurs rôles travaillent dans le même créneau, ajoutez un shift distinct pour chaque rôle.",
+    rolesHintPre: "Vous pouvez attribuer différents rôles aux shifts. Ajoutez des rôles à",
+    rolesHintPost: ".", stepLink: "l'étape 1",
+    activeDaysLabel: "Jours auxquels ce groupe de shifts s'applique",
+    shiftsLabel: "Shifts", shiftsEmpty: "Pas encore de shifts — ajoutez le premier",
+    deleteGroup: "Supprimer le groupe", addShift: "Ajouter un shift", addGroup: "Ajouter un groupe de shifts",
+    roleInShift: "Rôle du shift…", noRole: "— sans rôle",
+    timeError: "L'heure de fin doit être après l'heure de début",
+  },
+  es: {
+    weekDays: ["Lu","Ma","Mi","Ju","Vi","Sá","Do"],
+    dayPrefix: "", daySuffix: "°",
+    scheduleTitle: "Horario de trabajo", scheduleHow: "¿Cómo opera el negocio?",
+    everyday: "Cada día", byWeekday: "Por día de la semana", customCycle: "Ciclo personalizado",
+    workdaysLabel: "Días laborales",
+    cycleHint: "Construye una alternancia de días laborales y libres. Ej: 2 trabajo → 2 libres. Máximo 7 días.",
+    workDay: "Día laboral", dayOff: "Día libre",
+    shiftsTitle: "Turnos",
+    shiftsDesc: "Si varios roles trabajan en el mismo bloque horario, añade un turno separado para cada rol.",
+    rolesHintPre: "Puedes asignar diferentes roles a los turnos. Añade roles en",
+    rolesHintPost: ".", stepLink: "el paso 1",
+    activeDaysLabel: "Días a los que aplica este grupo de turnos",
+    shiftsLabel: "Turnos", shiftsEmpty: "Sin turnos aún — añade el primero",
+    deleteGroup: "Eliminar grupo", addShift: "Añadir turno", addGroup: "Añadir grupo de turnos",
+    roleInShift: "Rol del turno…", noRole: "— sin rol",
+    timeError: "La hora de fin debe ser posterior a la de inicio",
+  },
+  it: {
+    weekDays: ["Lu","Ma","Me","Gi","Ve","Sa","Do"],
+    dayPrefix: "", daySuffix: "°",
+    scheduleTitle: "Orario di lavoro", scheduleHow: "Come opera l'azienda?",
+    everyday: "Ogni giorno", byWeekday: "Per giorno della settimana", customCycle: "Ciclo personalizzato",
+    workdaysLabel: "Giorni lavorativi",
+    cycleHint: "Crea un'alternanza di giorni lavorativi e di riposo. Es: 2 lavoro → 2 riposo. Max 7 giorni.",
+    workDay: "Giorno lavorativo", dayOff: "Giorno di riposo",
+    shiftsTitle: "Turni",
+    shiftsDesc: "Se più ruoli lavorano nello stesso blocco orario, aggiungi un turno separato per ogni ruolo.",
+    rolesHintPre: "Puoi assegnare ruoli diversi ai turni. Aggiungi ruoli al",
+    rolesHintPost: ".", stepLink: "passo 1",
+    activeDaysLabel: "Giorni a cui si applica questo gruppo di turni",
+    shiftsLabel: "Turni", shiftsEmpty: "Ancora nessun turno — aggiungi il primo",
+    deleteGroup: "Elimina gruppo", addShift: "Aggiungi turno", addGroup: "Aggiungi gruppo di turni",
+    roleInShift: "Ruolo nel turno…", noRole: "— nessun ruolo",
+    timeError: "L'ora di fine deve essere successiva all'ora di inizio",
+  },
+  pt: {
+    weekDays: ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"],
+    dayPrefix: "", daySuffix: "°",
+    scheduleTitle: "Horário de trabalho", scheduleHow: "Como o negócio opera?",
+    everyday: "Todos os dias", byWeekday: "Por dia da semana", customCycle: "Ciclo personalizado",
+    workdaysLabel: "Dias úteis",
+    cycleHint: "Crie uma alternância de dias úteis e de folga. Ex: 2 trabalho → 2 folga. Máximo 7 dias.",
+    workDay: "Dia de trabalho", dayOff: "Dia de folga",
+    shiftsTitle: "Turnos",
+    shiftsDesc: "Se vários cargos trabalham no mesmo bloco, adicione um turno separado para cada função.",
+    rolesHintPre: "Você pode atribuir diferentes funções aos turnos. Adicione funções na",
+    rolesHintPost: ".", stepLink: "etapa 1",
+    activeDaysLabel: "Dias em que este grupo de turnos se aplica",
+    shiftsLabel: "Turnos", shiftsEmpty: "Ainda sem turnos — adicione o primeiro",
+    deleteGroup: "Excluir grupo", addShift: "Adicionar turno", addGroup: "Adicionar grupo de turnos",
+    roleInShift: "Função no turno…", noRole: "— sem função",
+    timeError: "O horário de término deve ser posterior ao de início",
+  },
+  tr: {
+    weekDays: ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"],
+    dayPrefix: "", daySuffix: ".",
+    scheduleTitle: "Çalışma planı", scheduleHow: "İşletme nasıl çalışıyor?",
+    everyday: "Her gün", byWeekday: "Haftanın gününe göre", customCycle: "Özel döngü",
+    workdaysLabel: "Çalışma günleri",
+    cycleHint: "Çalışma ve tatil günlerini sıralayın. Örnek: 2 çalışma → 2 tatil. Maksimum 7 gün.",
+    workDay: "Çalışma günü", dayOff: "Tatil günü",
+    shiftsTitle: "Vardiyalar",
+    shiftsDesc: "Aynı zaman dilimine birden fazla rol giriyorsa, her rol için ayrı bir vardiya ekleyin.",
+    rolesHintPre: "Vardiyalara farklı roller atayabilirsiniz.",
+    rolesHintPost: "de rol ekleyin.", stepLink: "1. Adım",
+    activeDaysLabel: "Bu vardiya grubunun geçerli olduğu günler",
+    shiftsLabel: "Vardiyalar", shiftsEmpty: "Henüz vardiya yok — ilkini ekleyin",
+    deleteGroup: "Grubu sil", addShift: "Vardiya ekle", addGroup: "Vardiya grubu ekle",
+    roleInShift: "Vardiya rolü…", noRole: "— rol yok",
+    timeError: "Bitiş saati başlangıç saatinden sonra olmalı",
+  },
+  zh: {
+    weekDays: ["周一","周二","周三","周四","周五","周六","周日"],
+    dayPrefix: "第", daySuffix: "天",
+    scheduleTitle: "工作计划", scheduleHow: "业务如何运营？",
+    everyday: "每天", byWeekday: "按星期", customCycle: "自定义周期",
+    workdaysLabel: "工作日",
+    cycleHint: "设置工作日和休息日的交替规律。例如：2工作 → 2休息。最多7天。",
+    workDay: "工作日", dayOff: "休息日",
+    shiftsTitle: "班次",
+    shiftsDesc: "如果同一时间段有多个职位，请为每个角色单独添加班次。",
+    rolesHintPre: "您可以为班次分配不同角色。请在",
+    rolesHintPost: "添加角色。", stepLink: "第1步",
+    activeDaysLabel: "此班次组适用的日期",
+    shiftsLabel: "班次", shiftsEmpty: "暂无班次 — 添加第一个",
+    deleteGroup: "删除组", addShift: "添加班次", addGroup: "添加班次组",
+    roleInShift: "班次角色…", noRole: "— 无角色",
+    timeError: "结束时间必须晚于开始时间",
+  },
+  ja: {
+    weekDays: ["月","火","水","木","金","土","日"],
+    dayPrefix: "第", daySuffix: "日",
+    scheduleTitle: "勤務スケジュール", scheduleHow: "事業はどのように運営されていますか？",
+    everyday: "毎日", byWeekday: "曜日別", customCycle: "カスタムサイクル",
+    workdaysLabel: "勤務日",
+    cycleHint: "勤務日と休日のパターンを作成します。例: 2勤務 → 2休み。最大7日間。",
+    workDay: "勤務日", dayOff: "休日",
+    shiftsTitle: "シフト",
+    shiftsDesc: "同じ時間帯に複数の役割がある場合、各役割に別々のシフトを追加してください。",
+    rolesHintPre: "シフトに異なる役割を割り当てることができます。",
+    rolesHintPost: "で役割を追加してください。", stepLink: "ステップ1",
+    activeDaysLabel: "このシフトグループが適用される日",
+    shiftsLabel: "シフト", shiftsEmpty: "シフトはまだありません — 最初のものを追加",
+    deleteGroup: "グループを削除", addShift: "シフトを追加", addGroup: "シフトグループを追加",
+    roleInShift: "シフトの役割…", noRole: "— 役割なし",
+    timeError: "終了時刻は開始時刻より後にしてください",
+  },
+};
+
+function getS3Copy(language?: LanguageCode): S3Copy {
+  return s3Copy[language ?? "en"] ?? s3Copy.en;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 export function cycleTotal(c: CycleSeg[]) { return c.reduce((s, x) => s + x.days, 0); }
 
 export function workIndices(mode: WorkMode, weekDays: number[], cycle: CycleSeg[]): number[] {
@@ -40,8 +260,8 @@ export function workIndices(mode: WorkMode, weekDays: number[], cycle: CycleSeg[
   return res;
 }
 
-function dayLabel(mode: WorkMode, i: number) {
-  return mode === "weekly" ? WEEK[i] : `${i + 1}-й`;
+function dayLabel(mode: WorkMode, i: number, sc: S3Copy) {
+  return mode === "weekly" ? sc.weekDays[i] : `${sc.dayPrefix}${i + 1}${sc.daySuffix}`;
 }
 
 function colors(dark: boolean) {
@@ -118,7 +338,9 @@ function TimeInput({ value, onChange, dark }: { value: string; onChange: (v: str
   );
 }
 
-function RoleDropdown({ value, onChange, roles, dark }: { value: string; onChange: (v: string) => void; roles: string[]; dark: boolean }) {
+function RoleDropdown({ value, onChange, roles, dark, sc }: {
+  value: string; onChange: (v: string) => void; roles: string[]; dark: boolean; sc: S3Copy;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const tc = colors(dark);
@@ -143,7 +365,7 @@ function RoleDropdown({ value, onChange, roles, dark }: { value: string; onChang
         fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", cursor: "pointer",
         transition: "border-color 0.18s", outline: "none",
       }}>
-        <span>{value || "Роль в смене…"}</span>
+        <span>{value || sc.roleInShift}</span>
         <ChevronDown size={13} strokeWidth={2} style={{ color: tc.iconMuted, flexShrink: 0, transform: open ? "rotate(180deg)" : "none", transition: "transform 0.15s" }} />
       </button>
 
@@ -162,7 +384,7 @@ function RoleDropdown({ value, onChange, roles, dark }: { value: string; onChang
             }}
               onMouseEnter={e => (e.currentTarget.style.background = hoverBg)}
               onMouseLeave={e => (e.currentTarget.style.background = "none")}
-            >— без роли</button>
+            >{sc.noRole}</button>
           )}
           {roles.map(r => (
             <button key={r} onClick={() => { onChange(r); setOpen(false); }} style={{
@@ -184,8 +406,8 @@ function RoleDropdown({ value, onChange, roles, dark }: { value: string; onChang
 }
 
 // ─── Cycle builder ────────────────────────────────────────────────────────────
-function CycleBuilder({ cycle, onChange, dark }: {
-  cycle: CycleSeg[]; onChange: (c: CycleSeg[]) => void; dark: boolean;
+function CycleBuilder({ cycle, onChange, dark, sc }: {
+  cycle: CycleSeg[]; onChange: (c: CycleSeg[]) => void; dark: boolean; sc: S3Copy;
 }) {
   const tc = colors(dark);
   const total = cycleTotal(cycle);
@@ -195,7 +417,6 @@ function CycleBuilder({ cycle, onChange, dark }: {
     if (total >= 7) return;
     onChange([...cycle, { id: nextId.current++, type, days: 1 }]);
   };
-
 
   const deleteSeg = (id: number) => onChange(cycle.filter(s => s.id !== id));
 
@@ -208,9 +429,8 @@ function CycleBuilder({ cycle, onChange, dark }: {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-      <Hint text="Составьте чередование рабочих и выходных дней. Например: 2 рабочих → 2 выходных. Максимум — 7 дней суммарно." dark={dark} />
+      <Hint text={sc.cycleHint} dark={dark} />
 
-      {/* Segments */}
       {cycle.length > 0 && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
           {cycle.map(seg => {
@@ -223,7 +443,7 @@ function CycleBuilder({ cycle, onChange, dark }: {
                 border: `1px solid ${isWork ? workBorder : offBorder}`,
               }}>
                 <span style={{ color: isWork ? workText : offText, fontSize: "0.75rem", fontWeight: 600 }}>
-                  {isWork ? "Рабочий день" : "Выходной день"}
+                  {isWork ? sc.workDay : sc.dayOff}
                 </span>
                 <button onClick={() => deleteSeg(seg.id)} style={{
                   background: "none", border: "none", cursor: "pointer", padding: "0 0 0 2px",
@@ -235,7 +455,6 @@ function CycleBuilder({ cycle, onChange, dark }: {
         </div>
       )}
 
-      {/* Add buttons */}
       {total < 7 && (
         <div style={{ display: "flex", gap: "6px" }}>
           <button onClick={() => addSeg("work")} style={{
@@ -247,7 +466,7 @@ function CycleBuilder({ cycle, onChange, dark }: {
           }}
             onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
             onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-          ><Plus size={12} strokeWidth={2.5} />Рабочий день</button>
+          ><Plus size={12} strokeWidth={2.5} />{sc.workDay}</button>
 
           <button onClick={() => addSeg("off")} style={{
             display: "inline-flex", alignItems: "center", gap: "5px",
@@ -258,7 +477,7 @@ function CycleBuilder({ cycle, onChange, dark }: {
           }}
             onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
             onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-          ><Plus size={12} strokeWidth={2.5} />Выходной день</button>
+          ><Plus size={12} strokeWidth={2.5} />{sc.dayOff}</button>
         </div>
       )}
     </div>
@@ -266,9 +485,9 @@ function CycleBuilder({ cycle, onChange, dark }: {
 }
 
 // ─── Day toggles inside a shift config ───────────────────────────────────────
-function ConfigDayToggles({ mode, weekDays, cycle, activeDays, onChange, dark }: {
+function ConfigDayToggles({ mode, weekDays, cycle, activeDays, onChange, dark, sc }: {
   mode: WorkMode; weekDays: number[]; cycle: CycleSeg[];
-  activeDays: number[]; onChange: (d: number[]) => void; dark: boolean;
+  activeDays: number[]; onChange: (d: number[]) => void; dark: boolean; sc: S3Copy;
 }) {
   const tc = colors(dark);
   const total = mode === "custom" ? cycleTotal(cycle) : 7;
@@ -276,7 +495,7 @@ function ConfigDayToggles({ mode, weekDays, cycle, activeDays, onChange, dark }:
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      <Label text="Дни, для которых действует эта группа смен" dark={dark} />
+      <Label text={sc.activeDaysLabel} dark={dark} />
       <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
         {Array.from({ length: total }, (_, i) => {
           const isWork = working.includes(i);
@@ -294,7 +513,7 @@ function ConfigDayToggles({ mode, weekDays, cycle, activeDays, onChange, dark }:
                 opacity: isWork ? 1 : 0.4, transition: "all 0.15s",
                 boxShadow: isActive ? "0 2px 8px rgba(168,85,247,0.3)" : "none",
               }}
-            >{dayLabel(mode, i)}</button>
+            >{dayLabel(mode, i, sc)}</button>
           );
         })}
       </div>
@@ -303,10 +522,10 @@ function ConfigDayToggles({ mode, weekDays, cycle, activeDays, onChange, dark }:
 }
 
 // ─── Shift row ────────────────────────────────────────────────────────────────
-function ShiftRow({ shift, roles, onUpdate, onDelete, dark }: {
+function ShiftRow({ shift, roles, onUpdate, onDelete, dark, sc }: {
   shift: Shift3; roles: string[];
   onUpdate: (patch: Partial<Shift3>) => void;
-  onDelete: () => void; dark: boolean;
+  onDelete: () => void; dark: boolean; sc: S3Copy;
 }) {
   const tc = colors(dark);
   const hasRoles = roles.length > 0;
@@ -317,7 +536,7 @@ function ShiftRow({ shift, roles, onUpdate, onDelete, dark }: {
         <TimeInput value={shift.from} onChange={v => onUpdate({ from: v })} dark={dark} />
         <span style={{ color: invalid ? "#f87171" : tc.faint, fontSize: "0.8rem", flexShrink: 0 }}>→</span>
         <TimeInput value={shift.to} onChange={v => onUpdate({ to: v })} dark={dark} />
-        {hasRoles && <RoleDropdown value={shift.role} onChange={v => onUpdate({ role: v })} roles={roles} dark={dark} />}
+        {hasRoles && <RoleDropdown value={shift.role} onChange={v => onUpdate({ role: v })} roles={roles} dark={dark} sc={sc} />}
         <button onClick={onDelete} style={{
           background: "none", border: "none", cursor: "pointer", padding: "4px",
           color: tc.iconMuted, display: "flex", flexShrink: 0, borderRadius: "6px", transition: "color 0.15s",
@@ -328,16 +547,12 @@ function ShiftRow({ shift, roles, onUpdate, onDelete, dark }: {
       </div>
       {invalid && (
         <div style={{
-          marginTop: "5px",
-          padding: "7px 9px",
-          borderRadius: "8px",
+          marginTop: "5px", padding: "7px 9px", borderRadius: "8px",
           background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)",
-          border: "1px solid rgba(248,113,113,0.22)",
-          color: "#f87171",
-          fontSize: "0.72rem",
-          lineHeight: 1.35,
+          border: "1px solid rgba(248,113,113,0.22)", color: "#f87171",
+          fontSize: "0.72rem", lineHeight: 1.35,
         }}>
-          Время окончания должно быть позже начала
+          {sc.timeError}
         </div>
       )}
     </div>
@@ -345,10 +560,10 @@ function ShiftRow({ shift, roles, onUpdate, onDelete, dark }: {
 }
 
 // ─── Shift config block ───────────────────────────────────────────────────────
-function ConfigBlock({ config, mode, weekDays, cycle, roles, onUpdate, onDelete, showDelete, dark }: {
+function ConfigBlock({ config, mode, weekDays, cycle, roles, onUpdate, onDelete, showDelete, dark, sc }: {
   config: ShiftConfig3; mode: WorkMode; weekDays: number[]; cycle: CycleSeg[];
   roles: string[]; onUpdate: (c: ShiftConfig3) => void;
-  onDelete: () => void; showDelete: boolean; dark: boolean;
+  onDelete: () => void; showDelete: boolean; dark: boolean; sc: S3Copy;
 }) {
   const tc = colors(dark);
   const nextShiftId = useRef(10000);
@@ -364,26 +579,26 @@ function ConfigBlock({ config, mode, weekDays, cycle, roles, onUpdate, onDelete,
           <button onClick={onDelete} style={{ background: "none", border: "none", cursor: "pointer", color: tc.iconMuted, fontSize: "0.75rem", fontFamily: "'DM Sans',sans-serif", display: "flex", alignItems: "center", gap: "4px", padding: 0, transition: "color 0.15s" }}
             onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
             onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
-          ><Trash2 size={12} strokeWidth={1.8} />Удалить группу</button>
+          ><Trash2 size={12} strokeWidth={1.8} />{sc.deleteGroup}</button>
         </div>
       )}
 
       {mode !== "daily" && (
         <div style={{ marginBottom: "14px" }}>
-          <ConfigDayToggles mode={mode} weekDays={weekDays} cycle={cycle} activeDays={config.activeDays} onChange={days => onUpdate({ ...config, activeDays: days })} dark={dark} />
+          <ConfigDayToggles mode={mode} weekDays={weekDays} cycle={cycle} activeDays={config.activeDays} onChange={days => onUpdate({ ...config, activeDays: days })} dark={dark} sc={sc} />
         </div>
       )}
 
-      <Label text="Смены" dark={dark} />
+      <Label text={sc.shiftsLabel} dark={dark} />
 
       {config.shifts.length === 0 && (
-        <p style={{ color: tc.faint, fontSize: "0.78rem", margin: "0 0 10px" }}>Смен пока нет — добавьте первую</p>
+        <p style={{ color: tc.faint, fontSize: "0.78rem", margin: "0 0 10px" }}>{sc.shiftsEmpty}</p>
       )}
 
       {config.shifts.map(shift => (
         <ShiftRow key={shift.id} shift={shift} roles={roles}
           onUpdate={patch => updateShift(shift.id, patch)}
-          onDelete={() => deleteShift(shift.id)} dark={dark} />
+          onDelete={() => deleteShift(shift.id)} dark={dark} sc={sc} />
       ))}
 
       <button onClick={addShift} style={{
@@ -395,15 +610,16 @@ function ConfigBlock({ config, mode, weekDays, cycle, roles, onUpdate, onDelete,
       }}
         onMouseEnter={e => { e.currentTarget.style.borderColor = "#a855f7"; e.currentTarget.style.color = dark ? "#c4b5fd" : "#7c3aed"; }}
         onMouseLeave={e => { e.currentTarget.style.borderColor = tc.inputBorder; e.currentTarget.style.color = tc.sub; }}
-      ><Plus size={13} strokeWidth={2} />Добавить смену</button>
+      ><Plus size={13} strokeWidth={2} />{sc.addShift}</button>
     </div>
   );
 }
 
 // ─── Step 3: work mode only ───────────────────────────────────────────────────
-export function StepThree({ data, onChange, dark }: {
-  data: Step3Data; onChange: (d: Step3Data) => void; dark: boolean;
+export function StepThree({ data, onChange, dark, language }: {
+  data: Step3Data; onChange: (d: Step3Data) => void; dark: boolean; language?: LanguageCode;
 }) {
+  const sc = getS3Copy(language);
   const tc = colors(dark);
 
   const setMode = (mode: WorkMode) => {
@@ -424,24 +640,24 @@ export function StepThree({ data, onChange, dark }: {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1.15rem", margin: "0 0 16px", letterSpacing: "-0.03em" }}>
-        График работы
+        {sc.scheduleTitle}
       </p>
 
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0, paddingRight: "2px" }}>
         <div style={{ marginBottom: "16px" }}>
-          <Label text="Как работает бизнес?" dark={dark} />
+          <Label text={sc.scheduleHow} dark={dark} />
           <Pills dark={dark} value={data.mode} onChange={v => setMode(v as WorkMode)} options={[
-            { value: "daily",  label: "Каждый день" },
-            { value: "weekly", label: "По дням недели" },
-            { value: "custom", label: "Свой цикл" },
+            { value: "daily",  label: sc.everyday },
+            { value: "weekly", label: sc.byWeekday },
+            { value: "custom", label: sc.customCycle },
           ]} />
         </div>
 
         {data.mode === "weekly" && (
           <div style={{ marginBottom: "8px" }}>
-            <Label text="Рабочие дни" dark={dark} />
+            <Label text={sc.workdaysLabel} dark={dark} />
             <div style={{ display: "flex", gap: "5px" }}>
-              {WEEK.map((d, i) => {
+              {sc.weekDays.map((d, i) => {
                 const active = data.weekDays.includes(i);
                 return (
                   <button key={i}
@@ -462,7 +678,7 @@ export function StepThree({ data, onChange, dark }: {
         )}
 
         {data.mode === "custom" && (
-          <CycleBuilder cycle={data.cycle} onChange={setCycle} dark={dark} />
+          <CycleBuilder cycle={data.cycle} onChange={setCycle} dark={dark} sc={sc} />
         )}
       </div>
     </div>
@@ -470,10 +686,11 @@ export function StepThree({ data, onChange, dark }: {
 }
 
 // ─── Step 4: shifts ───────────────────────────────────────────────────────────
-export function StepFour({ data, onChange, globalRoles, onGoToStep, dark }: {
+export function StepFour({ data, onChange, globalRoles, onGoToStep, dark, language }: {
   data: Step3Data; onChange: (d: Step3Data) => void;
-  globalRoles: string[]; onGoToStep: (s: number) => void; dark: boolean;
+  globalRoles: string[]; onGoToStep: (s: number) => void; dark: boolean; language?: LanguageCode;
 }) {
+  const sc = getS3Copy(language);
   const tc = colors(dark);
   const nextCfgId = useRef(100);
   const hasRoles = globalRoles.length > 0;
@@ -490,21 +707,21 @@ export function StepFour({ data, onChange, globalRoles, onGoToStep, dark }: {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1.15rem", margin: "0 0 6px", letterSpacing: "-0.03em" }}>
-        Смены
+        {sc.shiftsTitle}
       </p>
       <p style={{ color: tc.sub, fontSize: "0.8rem", margin: "0 0 12px", lineHeight: 1.55 }}>
-        Если в один временной блок выходят несколько должностей — добавьте отдельную смену для каждой роли.
+        {sc.shiftsDesc}
       </p>
 
       {!hasRoles && (
         <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", padding: "10px 12px", borderRadius: "10px", background: tc.chipBg, border: `1px solid ${tc.rowBorder}`, marginBottom: "14px" }}>
           <AlertCircle size={14} strokeWidth={1.8} style={{ color: tc.iconMuted, flexShrink: 0, marginTop: "1px" }} />
           <span style={{ color: tc.sub, fontSize: "0.78rem", lineHeight: 1.6 }}>
-            Вы можете назначать разные роли для смен. Для этого добавьте роли на{" "}
-            <a onClick={() => onGoToStep(2)} style={{ color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", textDecoration: "none", fontWeight: 500 }}
+            {sc.rolesHintPre}{" "}
+            <a onClick={() => onGoToStep(1)} style={{ color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", textDecoration: "none", fontWeight: 500 }}
               onMouseEnter={e => ((e.target as HTMLElement).style.textDecoration = "underline")}
               onMouseLeave={e => ((e.target as HTMLElement).style.textDecoration = "none")}
-            >шаге 2</a>.
+            >{sc.stepLink}</a>{sc.rolesHintPost}
           </span>
         </div>
       )}
@@ -516,7 +733,7 @@ export function StepFour({ data, onChange, globalRoles, onGoToStep, dark }: {
             onUpdate={c => updateConfig(cfg.id, c)}
             onDelete={() => deleteConfig(cfg.id)}
             showDelete={data.configs.length > 1}
-            dark={dark}
+            dark={dark} sc={sc}
           />
         ))}
 
@@ -530,7 +747,7 @@ export function StepFour({ data, onChange, globalRoles, onGoToStep, dark }: {
           }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = "#a855f7"; e.currentTarget.style.color = dark ? "#c4b5fd" : "#7c3aed"; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = tc.inputBorder; e.currentTarget.style.color = tc.sub; }}
-          ><Plus size={14} strokeWidth={2} />Добавить группу смен</button>
+          ><Plus size={14} strokeWidth={2} />{sc.addGroup}</button>
         )}
       </div>
     </div>

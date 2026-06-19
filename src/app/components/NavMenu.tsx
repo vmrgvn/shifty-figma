@@ -40,10 +40,24 @@ const LANGS: { code: LanguageCode; label: string; native: string; flag: string }
   { code: "ja", label: "Japanese", native: "日本語", flag: "🇯🇵" },
 ];
 
-const THEMES: { key: ThemeMode; label: string; Icon: typeof Sun }[] = [
-  { key: "dark",   label: "тёмная",    Icon: Moon    },
-  { key: "light",  label: "светлая",   Icon: Sun     },
-  { key: "system", label: "системная", Icon: Monitor },
+const NAV_COPY: Record<LanguageCode, { login: string; language: string; theme: string; dark: string; light: string; system: string }> = {
+  ru: { login: "Войти",       language: "Язык",     theme: "Тема",   dark: "тёмная",    light: "светлая",  system: "системная" },
+  en: { login: "Sign in",     language: "Language", theme: "Theme",  dark: "dark",      light: "light",    system: "system"    },
+  kk: { login: "Кіру",        language: "Тіл",      theme: "Тақырып",dark: "қара",      light: "ашық",     system: "жүйе"      },
+  de: { login: "Anmelden",    language: "Sprache",  theme: "Thema",  dark: "dunkel",    light: "hell",     system: "system"    },
+  fr: { login: "Se connecter",language: "Langue",   theme: "Thème",  dark: "sombre",    light: "clair",    system: "système"   },
+  es: { login: "Entrar",      language: "Idioma",   theme: "Tema",   dark: "oscuro",    light: "claro",    system: "sistema"   },
+  it: { login: "Accedi",      language: "Lingua",   theme: "Tema",   dark: "scuro",     light: "chiaro",   system: "sistema"   },
+  pt: { login: "Entrar",      language: "Idioma",   theme: "Tema",   dark: "escuro",    light: "claro",    system: "sistema"   },
+  tr: { login: "Giriş yap",   language: "Dil",      theme: "Tema",   dark: "koyu",      light: "açık",     system: "sistem"    },
+  zh: { login: "登录",         language: "语言",     theme: "主题",   dark: "深色",      light: "浅色",     system: "系统"      },
+  ja: { login: "ログイン",     language: "言語",     theme: "テーマ", dark: "ダーク",    light: "ライト",   system: "システム"  },
+};
+
+const THEMES: { key: ThemeMode; Icon: typeof Sun }[] = [
+  { key: "dark",   Icon: Moon    },
+  { key: "light",  Icon: Sun     },
+  { key: "system", Icon: Monitor },
 ];
 
 export function NavMenu({
@@ -59,6 +73,7 @@ export function NavMenu({
   const [hovered, setHovered] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const activeLang = LANGS.find((item) => item.code === language) ?? LANGS[0];
+  const nc = NAV_COPY[language] ?? NAV_COPY.en;
 
   useEffect(() => {
     if (!open) return;
@@ -196,7 +211,7 @@ export function NavMenu({
                 transition: "filter 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease",
               }}
             >
-              <span style={{ flex: 1, textAlign: "center" }}>Войти</span>
+              <span style={{ flex: 1, textAlign: "center" }}>{nc.login}</span>
             </button>
 
             <section style={{ marginTop: "16px" }}>
@@ -210,7 +225,7 @@ export function NavMenu({
                 }}
               >
                 <span style={{ color: color.text, fontSize: "0.82rem", fontWeight: 600 }}>
-                  Язык
+                  {nc.language}
                 </span>
               </div>
 
@@ -378,7 +393,7 @@ export function NavMenu({
                 }}
               >
                 <span style={{ color: color.text, fontSize: "0.82rem", fontWeight: 600 }}>
-                  Тема
+                  {nc.theme}
                 </span>
               </div>
 
@@ -391,7 +406,8 @@ export function NavMenu({
                   background: dark ? "rgba(255,255,255,0.045)" : "rgba(15,10,30,0.04)",
                 }}
               >
-                {THEMES.map(({ key, label, Icon }) => {
+                {THEMES.map(({ key, Icon }) => {
+                  const label = nc[key as "dark" | "light" | "system"];
                   const active = theme === key;
                   const index = THEMES.findIndex((item) => item.key === key);
 

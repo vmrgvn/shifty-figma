@@ -49,7 +49,7 @@ const copy: Record<
   },
   en: {
     headline: "Build a schedule",
-    accent: "before the coffee cools",
+    accent: "before your coffee gets cold",
     sub: "Fewer settings, better coverage. Shifty respects constraints and generates shifts around team rules, limits, and preferences in minutes.",
     cta: "Try it",
     hint: "Free, no signup required",
@@ -159,6 +159,10 @@ export default function App() {
 
   if (authOpen) {
     return <AuthPage dark={dark} language={language} onBack={() => setAuthOpen(false)} />;
+  }
+
+  if (wizardOpen) {
+    return <Wizard dark={dark} language={language} onBack={() => setWizardOpen(false)} onSignUp={() => { setWizardOpen(false); setAuthOpen(true); }} />;
   }
 
   return (
@@ -334,7 +338,6 @@ export default function App() {
         </motion.div>
       </main>
 
-      <Wizard open={wizardOpen} onClose={() => setWizardOpen(false)} dark={dark} language={language} />
       {/* Footer */}
       <div
         className="relative text-center py-4"

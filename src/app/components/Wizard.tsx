@@ -4,7 +4,7 @@ import { StepFive, Step5Data, defaultStep5, hasInvalidBreakTimes } from "./Wizar
 import { motion, AnimatePresence } from "motion/react";
 import {
   X, Plus, Trash2, Tag, CalendarOff, CalendarRange,
-  Clock3, Users2, UserRound, ChevronLeft, Search, Check,
+  Clock3, Users2, UserRound, ChevronLeft, Search, Check, House,
   Stethoscope, Umbrella, Calendar, ThumbsUp, ThumbsDown, AlertCircle,
 } from "lucide-react";
 import type { LanguageCode } from "./NavMenu";
@@ -157,8 +157,6 @@ function cloneEmployee(emp: EmpData): EmpData {
     socialPrefs: emp.socialPrefs.map(p => ({ ...p })),
   };
 }
-
-const TOTAL_STEPS = 6;
 
 const wizardCopy: Record<LanguageCode, {
   step: string;
@@ -1004,17 +1002,353 @@ const wizardStepCopy: Record<LanguageCode, {
   },
 };
 
+// ─── Generation-done copy ─────────────────────────────────────────────────────
+const genCopy: Record<LanguageCode, { done: string; doneText: string; signUp: string; download: string }> = {
+  ru:  { done: "Готово! Расписание составлено",   doneText: "Создайте аккаунт, чтобы редактировать и поделиться. Или скачайте файл прямо сейчас.",        signUp: "Создать аккаунт", download: "Скачать Excel-файл"         },
+  en:  { done: "Done! Schedule is ready",          doneText: "Create an account to edit and share. Or download the file right now.",                        signUp: "Create account",  download: "Download Excel file"        },
+  kk:  { done: "Дайын! Кесте құрылды",            doneText: "Өңдеу және бөлісу үшін аккаунт жасаңыз. Немесе файлды қазір жүктеңіз.",                     signUp: "Аккаунт жасау",   download: "Excel файлын жүктеу"          },
+  de:  { done: "Fertig! Dienstplan erstellt",      doneText: "Erstellen Sie ein Konto zum Bearbeiten und Teilen. Oder laden Sie die Datei jetzt herunter.", signUp: "Konto erstellen", download: "Excel-Datei herunterladen"  },
+  fr:  { done: "Prêt ! Planning créé",       doneText: "Créez un compte pour modifier et partager. Ou téléchargez le fichier maintenant.",            signUp: "Créer un compte", download: "Télécharger le fichier Excel"},
+  es:  { done: "¡Listo! Horario creado",          doneText: "Crea una cuenta para editar y compartir. O descarga el archivo ahora.",                       signUp: "Crear cuenta",    download: "Descargar archivo Excel"    },
+  it:  { done: "Fatto! Calendario creato",        doneText: "Crea un account per modificare e condividere. O scarica subito il file.",                     signUp: "Crea account",    download: "Scarica file Excel"         },
+  pt:  { done: "Pronto! Escala criada",           doneText: "Crie uma conta para editar e compartilhar. Ou baixe o arquivo agora.",                        signUp: "Criar conta",     download: "Baixar arquivo Excel"       },
+  tr:  { done: "Hazır! Plan oluşturuldu",         doneText: "Düzenlemek ve paylaşmak için hesap oluşturun. Ya da dosyayı hemen indirin.",                  signUp: "Hesap oluştur",   download: "Excel dosyasını indir"          },
+  zh:  { done: "完成！排班已生成",                 doneText: "创建账号以编辑和分享。或者立即下载文件。",                                                    signUp: "创建账号",        download: "下载 Excel 文件"             },
+  ja:  { done: "完了！シフト表が作成されました",   doneText: "編集・共有するにはアカウントを作成してください。または今すぐファイルをダウンロード。",        signUp: "アカウント作成",  download: "Excel ファイルをダウンロード" },
+};
+
+// ─── Step title copy ──────────────────────────────────────────────────────────
+const stepTitlesCopy: Record<LanguageCode, [string, string, string, string]> = {
+  ru: ["Команда и роли",      "Расписание",      "Смены",      "Настройки"    ],
+  en: ["Team & roles",        "Schedule",        "Shifts",     "Settings"     ],
+  kk: ["Команда мен рөлдер", "Кесте",           "Ауысымдар",  "Баптаулар"    ],
+  de: ["Team & Rollen",       "Dienstplan",      "Schichten",  "Einstellungen"],
+  fr: ["Équipe & rôles",      "Planning",        "Shifts",     "Paramètres"   ],
+  es: ["Equipo & roles",      "Horario",         "Turnos",     "Ajustes"      ],
+  it: ["Team & ruoli",        "Calendario",      "Turni",      "Impostazioni" ],
+  pt: ["Equipe & funções",    "Escala",          "Turnos",     "Configurações"],
+  tr: ["Ekip & roller",       "Plan",            "Vardiyalar", "Ayarlar"      ],
+  zh: ["团队与角色",           "排班计划",        "班次",       "设置"         ],
+  ja: ["チーム・役割",         "スケジュール",    "シフト",     "設定"         ],
+};
+
+// ─── Panel copy (RolesPanel translations) ────────────────────────────────────
+const rolePanelCopy: Record<LanguageCode, { search: string; emptyTitle: string; emptyHint: string; addRole: string }> = {
+  ru: { search: "Поиск или новая роль…",    emptyTitle: "Ролей пока нет",      emptyHint: "Роли помогают учитывать квалификацию при составлении расписания",          addRole: "Добавить роль"   },
+  en: { search: "Search or add a role…",    emptyTitle: "No roles yet",        emptyHint: "Roles help match qualifications when building the schedule",                addRole: "Add role"        },
+  kk: { search: "Іздеу немесе жаңа рөл…",  emptyTitle: "Рөл жоқ",            emptyHint: "Рөлдер кесте құру кезінде біліктілікті ескеруге көмектеседі",              addRole: "Рөл қосу"       },
+  de: { search: "Suchen oder neue Rolle…",  emptyTitle: "Noch keine Rollen",   emptyHint: "Rollen helfen, Qualifikationen bei der Planerstellung zu berücksichtigen", addRole: "Rolle hinzufügen"},
+  fr: { search: "Rechercher ou nouveau rôle…", emptyTitle: "Aucun rôle",       emptyHint: "Les rôles aident à tenir compte des qualifications dans le planning",      addRole: "Ajouter un rôle" },
+  es: { search: "Buscar o nuevo rol…",       emptyTitle: "Sin roles aún",      emptyHint: "Los roles ayudan a considerar las cualificaciones al crear el horario",    addRole: "Añadir rol"      },
+  it: { search: "Cerca o nuovo ruolo…",      emptyTitle: "Ancora nessun ruolo",emptyHint: "I ruoli aiutano a considerare le qualifiche nella pianificazione",         addRole: "Aggiungi ruolo"  },
+  pt: { search: "Pesquisar ou nova função…", emptyTitle: "Sem funções ainda",  emptyHint: "As funções ajudam a considerar qualificações na criação da escala",        addRole: "Adicionar função"},
+  tr: { search: "Ara veya yeni rol…",        emptyTitle: "Henüz rol yok",      emptyHint: "Roller, plan oluştururken nitelikleri dikkate almaya yardımcı olur",       addRole: "Rol ekle"        },
+  zh: { search: "搜索或添加新角色…",         emptyTitle: "还没有角色",          emptyHint: "角色有助于在生成排班时考虑资质",                                            addRole: "添加角色"        },
+  ja: { search: "検索または新しい役割…",     emptyTitle: "役割はまだありません",emptyHint: "役割はシフト作成時の資格考慮に役立ちます",                                 addRole: "役割を追加"      },
+};
+
+// ─── Panel copy (full) ───────────────────────────────────────────────────────
+type PanelCopy = {
+  weekDays: readonly [string,string,string,string,string,string,string];
+  noAbsences: string; noAbsencesHint: string;
+  absenceType: string;
+  sick: string; vacation: string; other: string;
+  dateFrom: string; dateTo: string; dateError: string;
+  repeat: string;
+  once: string; weekly: string; monthly: string;
+  date: string; weekdays: string; monthdays: string;
+  timeFromOpt: string; timeTo: string; timeError: string;
+  missingAbsence: string;
+  cancel: string; add: string; addAbsence: string;
+  sickLabel: string; vacationLabel: string;
+  singleAbsence: string; weeklyLabel: string; monthlyLabel: string; absenceGeneric: string;
+  numbersSuffix: string;
+  hireDateDesc: string; hireDate: string; termDate: string;
+  termBeforeHireError: string; savedOk: string; datesSavedInfo: string; save: string;
+  noPrefs: string; noPrefsHint: string;
+  timeType: string; preferWork: string; avoidWork: string;
+  repeatLabel: string; daily: string; byWeekday: string; byMonthday: string;
+  prefer: string; avoid: string; missingTimePref: string; addPref: string;
+  socialDesc: string; noOthers: string; noOthersHint: string;
+  together: string; separate: string;
+};
+
+const panelCopyRec: Record<LanguageCode, PanelCopy> = {
+  ru: {
+    weekDays: ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"],
+    noAbsences: "Нет отсутствий", noAbsencesHint: "Добавьте отпуск, больничный или регулярное отсутствие. Например, ежедневное отсутствие по утрам.",
+    absenceType: "Тип отсутствия", sick: "Больничный", vacation: "Отпуск", other: "Другое",
+    dateFrom: "С", dateTo: "По", dateError: "Дата окончания не может быть раньше начала",
+    repeat: "Повторение", once: "Разово", weekly: "Еженедельно", monthly: "Ежемесячно",
+    date: "Дата", weekdays: "Дни недели", monthdays: "Числа месяца",
+    timeFromOpt: "Время с (необязательно)", timeTo: "Время по", timeError: "Время окончания должно быть позже начала",
+    missingAbsence: "Заполните обязательные поля для отсутствия.", cancel: "Отмена", add: "Добавить", addAbsence: "Добавить отсутствие",
+    sickLabel: "Больничный", vacationLabel: "Отпуск",
+    singleAbsence: "Разовое отсутствие", weeklyLabel: "Еженедельно", monthlyLabel: "Ежемесячно", absenceGeneric: "Отсутствие", numbersSuffix: " числа",
+    hireDateDesc: "Необязательная информация, но она позволит корректнее составить расписание и не назначить смену уволенному или ещё не вышедшему сотруднику.",
+    hireDate: "Дата найма", termDate: "Дата увольнения",
+    termBeforeHireError: "Дата увольнения не может быть раньше даты найма",
+    savedOk: "Сохранено", datesSavedInfo: "Даты сохраняются в карточке сотрудника", save: "Сохранить",
+    noPrefs: "Предпочтений нет", noPrefsHint: "Укажите, когда сотруднику удобно или неудобно работать. Постараемся учесть при генерации — но это мягкое условие, не жёсткое.",
+    timeType: "Тип", preferWork: "Удобно работать", avoidWork: "Неудобно работать",
+    repeatLabel: "Повторение", daily: "Каждый день", byWeekday: "По дням недели", byMonthday: "По дням месяца",
+    prefer: "Удобно", avoid: "Неудобно", missingTimePref: "Заполните время и выбранные дни.", addPref: "Добавить предпочтение",
+    socialDesc: "Укажите, с кем сотрудник хочет или не хочет работать в смену. Постараемся учесть при составлении расписания, но это мягкое условие.",
+    noOthers: "Нет других сотрудников", noOthersHint: "Добавьте ещё одного сотрудника, чтобы настроить предпочтения",
+    together: "Вместе", separate: "Раздельно",
+  },
+  en: {
+    weekDays: ["Mo","Tu","We","Th","Fr","Sa","Su"],
+    noAbsences: "No absences", noAbsencesHint: "Add vacation, sick leave, or a recurring absence. For example, daily absences in the morning.",
+    absenceType: "Absence type", sick: "Sick leave", vacation: "Vacation", other: "Other",
+    dateFrom: "From", dateTo: "To", dateError: "End date cannot be before start date",
+    repeat: "Repeat", once: "Once", weekly: "Weekly", monthly: "Monthly",
+    date: "Date", weekdays: "Weekdays", monthdays: "Days of month",
+    timeFromOpt: "From (optional)", timeTo: "To", timeError: "End time must be later than start time",
+    missingAbsence: "Fill in the required fields for this absence.", cancel: "Cancel", add: "Add", addAbsence: "Add absence",
+    sickLabel: "Sick leave", vacationLabel: "Vacation",
+    singleAbsence: "Single absence", weeklyLabel: "Weekly", monthlyLabel: "Monthly", absenceGeneric: "Absence", numbersSuffix: "",
+    hireDateDesc: "Optional info, but helps build a more accurate schedule and avoids assigning shifts to employees who haven't started or have already left.",
+    hireDate: "Hire date", termDate: "Termination date",
+    termBeforeHireError: "Termination date cannot be before hire date",
+    savedOk: "Saved", datesSavedInfo: "Dates are saved in the employee card", save: "Save",
+    noPrefs: "No preferences", noPrefsHint: "Specify when the employee prefers or avoids working. We'll do our best to accommodate — soft constraint.",
+    timeType: "Type", preferWork: "Prefer to work", avoidWork: "Prefer not to work",
+    repeatLabel: "Repeat", daily: "Every day", byWeekday: "By day of week", byMonthday: "By day of month",
+    prefer: "Prefer", avoid: "Avoid", missingTimePref: "Fill in the time and selected days.", addPref: "Add preference",
+    socialDesc: "Specify who the employee wants or doesn't want to work with. We'll try to accommodate — soft constraint.",
+    noOthers: "No other employees", noOthersHint: "Add another employee to configure preferences",
+    together: "Together", separate: "Separate",
+  },
+  kk: {
+    weekDays: ["Дс","Сс","Ср","Бс","Жм","Сб","Жк"],
+    noAbsences: "Болмаулар жоқ", noAbsencesHint: "Демалыс, ауырып қалу немесе үнемі болмауды қосыңыз.",
+    absenceType: "Болмау түрі", sick: "Науқастану", vacation: "Демалыс", other: "Басқа",
+    dateFrom: "Бастап", dateTo: "Дейін", dateError: "Аяқталу күні басталу күнінен бұрын болмауы керек",
+    repeat: "Қайталану", once: "Бірреттік", weekly: "Апта сайын", monthly: "Ай сайын",
+    date: "Күні", weekdays: "Апта күндері", monthdays: "Айдың күндері",
+    timeFromOpt: "Бастап (міндетті емес)", timeTo: "Дейін", timeError: "Аяқталу уақыты басталу уақытынан кейін болуы керек",
+    missingAbsence: "Болмау үшін міндетті өрістерді толтырыңыз.", cancel: "Бас тарту", add: "Қосу", addAbsence: "Болмау қосу",
+    sickLabel: "Науқастану", vacationLabel: "Демалыс",
+    singleAbsence: "Бірреттік болмау", weeklyLabel: "Апта сайын", monthlyLabel: "Ай сайын", absenceGeneric: "Болмау", numbersSuffix: "",
+    hireDateDesc: "Міндетті емес ақпарат, бірақ кестені дәлірек құруға және жұмысқа шықпаған немесе жұмыстан шыққан қызметкерге ауысым тағайындамауға көмектеседі.",
+    hireDate: "Жалдану күні", termDate: "Жұмыстан шығу күні",
+    termBeforeHireError: "Жұмыстан шығу күні жалдану күнінен бұрын болмауы керек",
+    savedOk: "Сақталды", datesSavedInfo: "Күндер қызметкер картасында сақталады", save: "Сақтау",
+    noPrefs: "Артықшылықтар жоқ", noPrefsHint: "Қызметкерге қашан ыңғайлы немесе ыңғайсыз болатынын көрсетіңіз.",
+    timeType: "Түрі", preferWork: "Жұмыс істеуге ыңғайлы", avoidWork: "Жұмыс істеуге ыңғайсыз",
+    repeatLabel: "Қайталану", daily: "Күн сайын", byWeekday: "Апта күні бойынша", byMonthday: "Ай күні бойынша",
+    prefer: "Ыңғайлы", avoid: "Ыңғайсыз", missingTimePref: "Уақытты және таңдалған күндерді толтырыңыз.", addPref: "Артықшылық қосу",
+    socialDesc: "Қызметкер кіммен бірге немесе бөлек жұмыс істегісі келетінін көрсетіңіз.",
+    noOthers: "Басқа қызметкерлер жоқ", noOthersHint: "Артықшылықтарды баптау үшін басқа қызметкер қосыңыз",
+    together: "Бірге", separate: "Бөлек",
+  },
+  de: {
+    weekDays: ["Mo","Di","Mi","Do","Fr","Sa","So"],
+    noAbsences: "Keine Abwesenheiten", noAbsencesHint: "Fügen Sie Urlaub, Krankheit oder wiederkehrende Abwesenheiten hinzu.",
+    absenceType: "Abwesenheitstyp", sick: "Krankmeldung", vacation: "Urlaub", other: "Sonstiges",
+    dateFrom: "Von", dateTo: "Bis", dateError: "Enddatum darf nicht vor dem Startdatum liegen",
+    repeat: "Wiederholung", once: "Einmalig", weekly: "Wöchentlich", monthly: "Monatlich",
+    date: "Datum", weekdays: "Wochentage", monthdays: "Monatstage",
+    timeFromOpt: "Von (optional)", timeTo: "Bis", timeError: "Endzeit muss nach Startzeit liegen",
+    missingAbsence: "Füllen Sie die Pflichtfelder für diese Abwesenheit aus.", cancel: "Abbrechen", add: "Hinzufügen", addAbsence: "Abwesenheit hinzufügen",
+    sickLabel: "Krankmeldung", vacationLabel: "Urlaub",
+    singleAbsence: "Einmalige Abwesenheit", weeklyLabel: "Wöchentlich", monthlyLabel: "Monatlich", absenceGeneric: "Abwesenheit", numbersSuffix: ".",
+    hireDateDesc: "Optionale Angabe, hilft aber, den Dienstplan genauer zu erstellen und Schichten nicht für ausgeschiedene oder noch nicht eingestiegene Mitarbeiter einzuplanen.",
+    hireDate: "Einstellungsdatum", termDate: "Kündigungsdatum",
+    termBeforeHireError: "Kündigungsdatum darf nicht vor dem Einstellungsdatum liegen",
+    savedOk: "Gespeichert", datesSavedInfo: "Datumsangaben werden in der Mitarbeiterkarte gespeichert", save: "Speichern",
+    noPrefs: "Keine Präferenzen", noPrefsHint: "Geben Sie an, wann der Mitarbeiter gern oder ungern arbeitet. Wir berücksichtigen dies als weiches Kriterium.",
+    timeType: "Typ", preferWork: "Arbeit bevorzugt", avoidWork: "Arbeit vermieden",
+    repeatLabel: "Wiederholung", daily: "Jeden Tag", byWeekday: "Nach Wochentag", byMonthday: "Nach Monatstag",
+    prefer: "Bevorzugt", avoid: "Vermieden", missingTimePref: "Bitte Zeit und ausgewählte Tage angeben.", addPref: "Präferenz hinzufügen",
+    socialDesc: "Geben Sie an, mit wem der Mitarbeiter zusammenarbeiten möchte oder nicht. Weiches Kriterium.",
+    noOthers: "Keine anderen Mitarbeiter", noOthersHint: "Fügen Sie einen weiteren Mitarbeiter hinzu, um Präferenzen zu konfigurieren",
+    together: "Zusammen", separate: "Getrennt",
+  },
+  fr: {
+    weekDays: ["Lu","Ma","Me","Je","Ve","Sa","Di"],
+    noAbsences: "Pas d'absences", noAbsencesHint: "Ajoutez des congés, arrêts maladie ou absences récurrentes.",
+    absenceType: "Type d'absence", sick: "Arrêt maladie", vacation: "Congés", other: "Autre",
+    dateFrom: "Du", dateTo: "Au", dateError: "La date de fin ne peut pas être antérieure à la date de début",
+    repeat: "Répétition", once: "Unique", weekly: "Hebdomadaire", monthly: "Mensuel",
+    date: "Date", weekdays: "Jours de la semaine", monthdays: "Jours du mois",
+    timeFromOpt: "De (optionnel)", timeTo: "À", timeError: "L'heure de fin doit être après l'heure de début",
+    missingAbsence: "Remplissez les champs obligatoires pour cette absence.", cancel: "Annuler", add: "Ajouter", addAbsence: "Ajouter une absence",
+    sickLabel: "Arrêt maladie", vacationLabel: "Congés",
+    singleAbsence: "Absence unique", weeklyLabel: "Hebdomadaire", monthlyLabel: "Mensuel", absenceGeneric: "Absence", numbersSuffix: "",
+    hireDateDesc: "Information optionnelle, permet d'établir un planning plus précis et d'éviter d'assigner des shifts à des employés qui n'ont pas encore commencé ou qui sont partis.",
+    hireDate: "Date d'embauche", termDate: "Date de départ",
+    termBeforeHireError: "La date de départ ne peut pas être antérieure à la date d'embauche",
+    savedOk: "Enregistré", datesSavedInfo: "Les dates sont enregistrées dans la fiche employé", save: "Enregistrer",
+    noPrefs: "Pas de préférences", noPrefsHint: "Indiquez quand l'employé préfère ou évite de travailler. Condition flexible.",
+    timeType: "Type", preferWork: "Préfère travailler", avoidWork: "Évite de travailler",
+    repeatLabel: "Répétition", daily: "Tous les jours", byWeekday: "Par jour de la semaine", byMonthday: "Par jour du mois",
+    prefer: "Préfère", avoid: "Évite", missingTimePref: "Remplissez l'heure et les jours sélectionnés.", addPref: "Ajouter une préférence",
+    socialDesc: "Indiquez avec qui l'employé souhaite ou non travailler. Condition flexible.",
+    noOthers: "Pas d'autres employés", noOthersHint: "Ajoutez un autre employé pour configurer les préférences",
+    together: "Ensemble", separate: "Séparé",
+  },
+  es: {
+    weekDays: ["Lu","Ma","Mi","Ju","Vi","Sá","Do"],
+    noAbsences: "Sin ausencias", noAbsencesHint: "Añade vacaciones, bajas por enfermedad o ausencias recurrentes.",
+    absenceType: "Tipo de ausencia", sick: "Baja por enfermedad", vacation: "Vacaciones", other: "Otro",
+    dateFrom: "Desde", dateTo: "Hasta", dateError: "La fecha de fin no puede ser anterior a la de inicio",
+    repeat: "Repetición", once: "Una vez", weekly: "Semanal", monthly: "Mensual",
+    date: "Fecha", weekdays: "Días de la semana", monthdays: "Días del mes",
+    timeFromOpt: "Desde (opcional)", timeTo: "Hasta", timeError: "La hora de fin debe ser posterior a la de inicio",
+    missingAbsence: "Completa los campos obligatorios para esta ausencia.", cancel: "Cancelar", add: "Añadir", addAbsence: "Añadir ausencia",
+    sickLabel: "Baja por enfermedad", vacationLabel: "Vacaciones",
+    singleAbsence: "Ausencia única", weeklyLabel: "Semanal", monthlyLabel: "Mensual", absenceGeneric: "Ausencia", numbersSuffix: "",
+    hireDateDesc: "Información opcional, pero ayuda a crear un horario más preciso y a evitar asignar turnos a empleados que aún no han comenzado o que ya se han ido.",
+    hireDate: "Fecha de contratación", termDate: "Fecha de baja",
+    termBeforeHireError: "La fecha de baja no puede ser anterior a la de contratación",
+    savedOk: "Guardado", datesSavedInfo: "Las fechas se guardan en la ficha del empleado", save: "Guardar",
+    noPrefs: "Sin preferencias", noPrefsHint: "Indica cuándo el empleado prefiere o evita trabajar. Condición flexible.",
+    timeType: "Tipo", preferWork: "Prefiere trabajar", avoidWork: "Evita trabajar",
+    repeatLabel: "Repetición", daily: "Cada día", byWeekday: "Por día de la semana", byMonthday: "Por día del mes",
+    prefer: "Prefiere", avoid: "Evita", missingTimePref: "Completa el horario y los días seleccionados.", addPref: "Añadir preferencia",
+    socialDesc: "Indica con quién el empleado quiere o no quiere trabajar. Condición flexible.",
+    noOthers: "No hay otros empleados", noOthersHint: "Añade otro empleado para configurar preferencias",
+    together: "Juntos", separate: "Separados",
+  },
+  it: {
+    weekDays: ["Lu","Ma","Me","Gi","Ve","Sa","Do"],
+    noAbsences: "Nessuna assenza", noAbsencesHint: "Aggiungi ferie, malattia o assenze ricorrenti.",
+    absenceType: "Tipo di assenza", sick: "Malattia", vacation: "Ferie", other: "Altro",
+    dateFrom: "Dal", dateTo: "Al", dateError: "La data di fine non può essere antecedente a quella di inizio",
+    repeat: "Ripetizione", once: "Una volta", weekly: "Settimanale", monthly: "Mensile",
+    date: "Data", weekdays: "Giorni della settimana", monthdays: "Giorni del mese",
+    timeFromOpt: "Dalle (opzionale)", timeTo: "Alle", timeError: "L'ora di fine deve essere successiva all'ora di inizio",
+    missingAbsence: "Compila i campi obbligatori per questa assenza.", cancel: "Annulla", add: "Aggiungi", addAbsence: "Aggiungi assenza",
+    sickLabel: "Malattia", vacationLabel: "Ferie",
+    singleAbsence: "Assenza singola", weeklyLabel: "Settimanale", monthlyLabel: "Mensile", absenceGeneric: "Assenza", numbersSuffix: "",
+    hireDateDesc: "Informazione opzionale, ma aiuta a creare un calendario più preciso e ad evitare turni per dipendenti non ancora iniziati o già usciti.",
+    hireDate: "Data di assunzione", termDate: "Data di fine rapporto",
+    termBeforeHireError: "La data di fine non può essere antecedente alla data di assunzione",
+    savedOk: "Salvato", datesSavedInfo: "Le date vengono salvate nella scheda del dipendente", save: "Salva",
+    noPrefs: "Nessuna preferenza", noPrefsHint: "Indica quando il dipendente preferisce o evita di lavorare. Vincolo flessibile.",
+    timeType: "Tipo", preferWork: "Preferisce lavorare", avoidWork: "Evita di lavorare",
+    repeatLabel: "Ripetizione", daily: "Ogni giorno", byWeekday: "Per giorno della settimana", byMonthday: "Per giorno del mese",
+    prefer: "Preferisce", avoid: "Evita", missingTimePref: "Compila l'orario e i giorni selezionati.", addPref: "Aggiungi preferenza",
+    socialDesc: "Indica con chi il dipendente vuole o non vuole lavorare. Vincolo flessibile.",
+    noOthers: "Nessun altro dipendente", noOthersHint: "Aggiungi un altro dipendente per configurare le preferenze",
+    together: "Insieme", separate: "Separato",
+  },
+  pt: {
+    weekDays: ["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"],
+    noAbsences: "Sem ausências", noAbsencesHint: "Adicione férias, atestados ou ausências recorrentes.",
+    absenceType: "Tipo de ausência", sick: "Atestado médico", vacation: "Férias", other: "Outro",
+    dateFrom: "De", dateTo: "Até", dateError: "A data de término não pode ser anterior à de início",
+    repeat: "Repetição", once: "Uma vez", weekly: "Semanal", monthly: "Mensal",
+    date: "Data", weekdays: "Dias da semana", monthdays: "Dias do mês",
+    timeFromOpt: "De (opcional)", timeTo: "Até", timeError: "O horário de término deve ser posterior ao de início",
+    missingAbsence: "Preencha os campos obrigatórios para esta ausência.", cancel: "Cancelar", add: "Adicionar", addAbsence: "Adicionar ausência",
+    sickLabel: "Atestado médico", vacationLabel: "Férias",
+    singleAbsence: "Ausência única", weeklyLabel: "Semanal", monthlyLabel: "Mensal", absenceGeneric: "Ausência", numbersSuffix: "",
+    hireDateDesc: "Informação opcional, mas ajuda a criar uma escala mais precisa e a evitar atribuir turnos a funcionários que ainda não começaram ou já saíram.",
+    hireDate: "Data de contratação", termDate: "Data de demissão",
+    termBeforeHireError: "A data de demissão não pode ser anterior à de contratação",
+    savedOk: "Salvo", datesSavedInfo: "As datas são salvas no perfil do funcionário", save: "Salvar",
+    noPrefs: "Sem preferências", noPrefsHint: "Indique quando o funcionário prefere ou evita trabalhar. Condição flexível.",
+    timeType: "Tipo", preferWork: "Prefere trabalhar", avoidWork: "Evita trabalhar",
+    repeatLabel: "Repetição", daily: "Todo dia", byWeekday: "Por dia da semana", byMonthday: "Por dia do mês",
+    prefer: "Prefere", avoid: "Evita", missingTimePref: "Preencha o horário e os dias selecionados.", addPref: "Adicionar preferência",
+    socialDesc: "Indique com quem o funcionário quer ou não quer trabalhar. Condição flexível.",
+    noOthers: "Nenhum outro funcionário", noOthersHint: "Adicione outro funcionário para configurar preferências",
+    together: "Juntos", separate: "Separados",
+  },
+  tr: {
+    weekDays: ["Pzt","Sal","Çar","Per","Cum","Cmt","Paz"],
+    noAbsences: "Devamsızlık yok", noAbsencesHint: "İzin, hastalık veya düzenli devamsızlık ekleyin.",
+    absenceType: "Devamsızlık türü", sick: "Hastalık izni", vacation: "Tatil", other: "Diğer",
+    dateFrom: "Başlangıç", dateTo: "Bitiş", dateError: "Bitiş tarihi başlangıç tarihinden önce olamaz",
+    repeat: "Tekrarlama", once: "Bir kez", weekly: "Haftalık", monthly: "Aylık",
+    date: "Tarih", weekdays: "Haftanın günleri", monthdays: "Ayın günleri",
+    timeFromOpt: "Başlangıç (isteğe bağlı)", timeTo: "Bitiş", timeError: "Bitiş saati başlangıç saatinden sonra olmalı",
+    missingAbsence: "Bu devamsızlık için zorunlu alanları doldurun.", cancel: "İptal", add: "Ekle", addAbsence: "Devamsızlık ekle",
+    sickLabel: "Hastalık izni", vacationLabel: "Tatil",
+    singleAbsence: "Tek seferlik devamsızlık", weeklyLabel: "Haftalık", monthlyLabel: "Aylık", absenceGeneric: "Devamsızlık", numbersSuffix: ".",
+    hireDateDesc: "İsteğe bağlı bilgi, ancak daha doğru bir plan oluşturmaya ve henüz başlamamış veya ayrılmış çalışanlara vardiya atamaktan kaçınmaya yardımcı olur.",
+    hireDate: "İşe başlama tarihi", termDate: "İşten çıkış tarihi",
+    termBeforeHireError: "İşten çıkış tarihi işe başlama tarihinden önce olamaz",
+    savedOk: "Kaydedildi", datesSavedInfo: "Tarihler çalışan kartında kaydedilir", save: "Kaydet",
+    noPrefs: "Tercih yok", noPrefsHint: "Çalışanın ne zaman çalışmayı tercih ettiğini veya etmediğini belirtin. Esnek kural.",
+    timeType: "Tür", preferWork: "Çalışmayı tercih eder", avoidWork: "Çalışmaktan kaçınır",
+    repeatLabel: "Tekrarlama", daily: "Her gün", byWeekday: "Haftanın gününe göre", byMonthday: "Ayın gününe göre",
+    prefer: "Tercih eder", avoid: "Kaçınır", missingTimePref: "Saati ve seçili günleri doldurun.", addPref: "Tercih ekle",
+    socialDesc: "Çalışanın kimlerle çalışmak istediğini veya istemediğini belirtin. Esnek kural.",
+    noOthers: "Başka çalışan yok", noOthersHint: "Tercihleri yapılandırmak için başka bir çalışan ekleyin",
+    together: "Birlikte", separate: "Ayrı",
+  },
+  zh: {
+    weekDays: ["周一","周二","周三","周四","周五","周六","周日"],
+    noAbsences: "无缺勤记录", noAbsencesHint: "添加假期、病假或定期缺勤记录。",
+    absenceType: "缺勤类型", sick: "病假", vacation: "年假", other: "其他",
+    dateFrom: "开始", dateTo: "结束", dateError: "结束日期不能早于开始日期",
+    repeat: "重复", once: "一次", weekly: "每周", monthly: "每月",
+    date: "日期", weekdays: "星期", monthdays: "月份日期",
+    timeFromOpt: "从（可选）", timeTo: "至", timeError: "结束时间必须晚于开始时间",
+    missingAbsence: "请填写此缺勤的必填字段。", cancel: "取消", add: "添加", addAbsence: "添加缺勤",
+    sickLabel: "病假", vacationLabel: "年假",
+    singleAbsence: "单次缺勤", weeklyLabel: "每周", monthlyLabel: "每月", absenceGeneric: "缺勤", numbersSuffix: "日",
+    hireDateDesc: "可选信息，但有助于更准确地制定排班，避免为尚未入职或已离职的员工安排班次。",
+    hireDate: "入职日期", termDate: "离职日期",
+    termBeforeHireError: "离职日期不能早于入职日期",
+    savedOk: "已保存", datesSavedInfo: "日期保存在员工卡中", save: "保存",
+    noPrefs: "无偏好", noPrefsHint: "指定员工希望或不希望工作的时间。软约束。",
+    timeType: "类型", preferWork: "偏好工作", avoidWork: "避免工作",
+    repeatLabel: "重复", daily: "每天", byWeekday: "按星期", byMonthday: "按月份日期",
+    prefer: "偏好", avoid: "避免", missingTimePref: "请填写时间和所选日期。", addPref: "添加偏好",
+    socialDesc: "指定员工希望或不希望与谁一起工作。软约束。",
+    noOthers: "没有其他员工", noOthersHint: "添加另一位员工以配置偏好",
+    together: "一起", separate: "分开",
+  },
+  ja: {
+    weekDays: ["月","火","水","木","金","土","日"],
+    noAbsences: "欠勤なし", noAbsencesHint: "休暇、病欠、または定期的な欠勤を追加してください。",
+    absenceType: "欠勤タイプ", sick: "病欠", vacation: "休暇", other: "その他",
+    dateFrom: "開始", dateTo: "終了", dateError: "終了日は開始日より後にしてください",
+    repeat: "繰り返し", once: "1回のみ", weekly: "毎週", monthly: "毎月",
+    date: "日付", weekdays: "曜日", monthdays: "月の日付",
+    timeFromOpt: "開始（任意）", timeTo: "終了", timeError: "終了時刻は開始時刻より後にしてください",
+    missingAbsence: "この欠勤の必須項目を入力してください。", cancel: "キャンセル", add: "追加", addAbsence: "欠勤を追加",
+    sickLabel: "病欠", vacationLabel: "休暇",
+    singleAbsence: "単回欠勤", weeklyLabel: "毎週", monthlyLabel: "毎月", absenceGeneric: "欠勤", numbersSuffix: "日",
+    hireDateDesc: "任意情報ですが、スケジュールをより正確に作成し、まだ入社していない、またはすでに退職した従業員にシフトを割り当てないために役立ちます。",
+    hireDate: "採用日", termDate: "退職日",
+    termBeforeHireError: "退職日は採用日より後にしてください",
+    savedOk: "保存しました", datesSavedInfo: "日付は従業員カードに保存されます", save: "保存",
+    noPrefs: "希望なし", noPrefsHint: "従業員が働きやすい/避けたい時間を指定してください。ソフト制約として考慮されます。",
+    timeType: "タイプ", preferWork: "働きやすい", avoidWork: "避けたい",
+    repeatLabel: "繰り返し", daily: "毎日", byWeekday: "曜日別", byMonthday: "日付別",
+    prefer: "好む", avoid: "避ける", missingTimePref: "時間と選択した日を入力してください。", addPref: "希望を追加",
+    socialDesc: "従業員が一緒に、または別々に働きたい相手を指定してください。ソフト制約です。",
+    noOthers: "他の従業員なし", noOthersHint: "希望を設定するには別の従業員を追加してください",
+    together: "一緒", separate: "別々",
+  },
+};
+
 // ─── Shared UI primitives ────────────────────────────────────────────────────
-function ProgressBar({ step, total }: { step: number; total: number }) {
+function ProgressBar({ step, total, stepNames, onStepClick }: {
+  step: number; total: number; stepNames: [string, string, string, string];
+  onStepClick: (s: number) => void;
+}) {
   return (
-    <div style={{ display: "flex", gap: "6px" }}>
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} style={{
-          flex: 1, height: "3px", borderRadius: "99px",
-          background: i < step ? "linear-gradient(90deg,#a855f7,#ec4899)" : "rgba(168,85,247,0.15)",
-          transition: "background 0.3s",
-        }} />
-      ))}
+    <div style={{ display: "flex", gap: "8px" }}>
+      {Array.from({ length: total }).map((_, i) => {
+        const completed = i + 1 < step;
+        const clickable = completed;
+        return (
+          <div key={i} onClick={() => clickable && onStepClick(i + 1)}
+            style={{ flex: 1, display: "flex", flexDirection: "column", gap: "5px", cursor: clickable ? "pointer" : "default" }}>
+            <div style={{ height: "3px", borderRadius: "99px", background: i < step ? "linear-gradient(90deg,#a855f7,#ec4899)" : "rgba(168,85,247,0.15)", transition: "background 0.3s", opacity: clickable ? 1 : 1 }} />
+            <span style={{ fontSize: "0.63rem", fontWeight: i + 1 === step ? 600 : 400, color: i + 1 === step ? "#a855f7" : completed ? "rgba(168,85,247,0.6)" : "rgba(168,85,247,0.35)", letterSpacing: "0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "color 0.3s", textDecoration: clickable ? "underline" : "none", textDecorationColor: "rgba(168,85,247,0.3)" }}>
+              {stepNames[i]}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -1247,15 +1581,17 @@ function SaveBtn({ label, onClick }: { label: string; onClick: () => void }) {
 }
 
 // ─── Roles panel ──────────────────────────────────────────────────────────────
-function RolesPanel({ emp, globalRoles, onToggleRole, onAddRole, dark }: {
+function RolesPanel({ emp, globalRoles, onToggleRole, onAddRole, dark, label, pCopy }: {
   emp: EmpData; globalRoles: string[];
   onToggleRole: (empId: number, role: string) => void;
   onAddRole?: (role: string) => void; dark: boolean;
+  label?: string; pCopy?: typeof rolePanelCopy.en;
 }) {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
   const tc = colors(dark);
+  const pc = pCopy ?? rolePanelCopy.en;
   useEffect(() => { setTimeout(() => searchRef.current?.focus(), 150); }, []);
 
   const q = query.trim().toLowerCase();
@@ -1265,13 +1601,13 @@ function RolesPanel({ emp, globalRoles, onToggleRole, onAddRole, dark }: {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <PanelHeader emp={emp} label="Роли" dark={dark} />
+      <PanelHeader emp={emp} label={label ?? pc.emptyTitle} dark={dark} />
 
       <div style={{ position: "relative", marginBottom: "10px" }}>
         <Search size={14} strokeWidth={1.8} style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", color: focused ? "#a855f7" : tc.iconMuted, pointerEvents: "none", transition: "color 0.18s" }} />
         <input ref={searchRef} value={query} onChange={e => setQuery(e.target.value)}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-          placeholder="Поиск или новая роль…"
+          placeholder={pc.search}
           style={{
             width: "100%", background: tc.inputBg, border: `1.5px solid ${focused ? "#a855f7" : tc.inputBorder}`,
             borderRadius: "10px", padding: "11px 14px 11px 36px", color: tc.headline,
@@ -1285,10 +1621,8 @@ function RolesPanel({ emp, globalRoles, onToggleRole, onAddRole, dark }: {
         {globalRoles.length === 0 && !showAdd && (
           <div style={{ textAlign: "center", padding: "28px 0" }}>
             <Tag size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 10px" }} />
-            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: "0 0 6px", fontWeight: 500 }}>Ролей пока нет</p>
-            <p style={{ color: tc.faint, fontSize: "0.78rem", margin: "0 auto", maxWidth: "260px", lineHeight: 1.55 }}>
-              Роли помогают учитывать квалификацию при составлении расписания — например, бармен не заменит повара, а стажер не может работать без старшего сотрудника
-            </p>
+            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: "0 0 6px", fontWeight: 500 }}>{pc.emptyTitle}</p>
+            <p style={{ color: tc.faint, fontSize: "0.78rem", margin: "0 auto", maxWidth: "260px", lineHeight: 1.55 }}>{pc.emptyHint}</p>
           </div>
         )}
         <AnimatePresence initial={false}>
@@ -1319,7 +1653,7 @@ function RolesPanel({ emp, globalRoles, onToggleRole, onAddRole, dark }: {
             <div style={{ width: "18px", height: "18px", borderRadius: "5px", flexShrink: 0, background: dark ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.1)", border: `1.5px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Plus size={11} strokeWidth={2.5} style={{ color: "#a855f7" }} />
             </div>
-            <span style={{ fontSize: "0.9rem", color: dark ? "#c4b5fd" : "#7c3aed", fontWeight: 500 }}>Добавить роль «{query.trim()}»</span>
+            <span style={{ fontSize: "0.9rem", color: dark ? "#c4b5fd" : "#7c3aed", fontWeight: 500 }}>{pc.addRole} «{query.trim()}»</span>
           </motion.button>
         )}
       </div>
@@ -1328,19 +1662,19 @@ function RolesPanel({ emp, globalRoles, onToggleRole, onAddRole, dark }: {
 }
 
 // ─── Absences panel ───────────────────────────────────────────────────────────
-function absenceLabel(a: Absence) {
+function absenceLabel(a: Absence, pc: PanelCopy) {
   const fmt = (d?: string) => d ? new Date(d).toLocaleDateString("ru", { day: "numeric", month: "short" }) : "—";
-  const days = WEEK_DAYS;
-  if (a.type === "sick")     return { main: "Больничный", sub: `${fmt(a.dateFrom)} — ${fmt(a.dateTo)}` };
-  if (a.type === "vacation") return { main: "Отпуск",     sub: `${fmt(a.dateFrom)} — ${fmt(a.dateTo)}` };
-  if (a.repeat === "once")    return { main: "Разовое отсутствие", sub: `${fmt(a.onceDate)}${a.timeFrom ? `, ${a.timeFrom}–${a.timeTo}` : ""}` };
-  if (a.repeat === "weekly")  return { main: "Еженедельно", sub: `${(a.weekDays || []).map(i => days[i]).join(", ")}${a.timeFrom ? ` ${a.timeFrom}–${a.timeTo}` : ""}` };
-  if (a.repeat === "monthly") return { main: "Ежемесячно", sub: `${(a.monthDays || []).join(", ")} числа${a.timeFrom ? ` ${a.timeFrom}–${a.timeTo}` : ""}` };
-  return { main: "Отсутствие", sub: "" };
+  const days = pc.weekDays;
+  if (a.type === "sick")     return { main: pc.sickLabel,     sub: `${fmt(a.dateFrom)} — ${fmt(a.dateTo)}` };
+  if (a.type === "vacation") return { main: pc.vacationLabel, sub: `${fmt(a.dateFrom)} — ${fmt(a.dateTo)}` };
+  if (a.repeat === "once")    return { main: pc.singleAbsence, sub: `${fmt(a.onceDate)}${a.timeFrom ? `, ${a.timeFrom}–${a.timeTo}` : ""}` };
+  if (a.repeat === "weekly")  return { main: pc.weeklyLabel,   sub: `${(a.weekDays || []).map(i => days[i]).join(", ")}${a.timeFrom ? ` ${a.timeFrom}–${a.timeTo}` : ""}` };
+  if (a.repeat === "monthly") return { main: pc.monthlyLabel,  sub: `${(a.monthDays || []).join(", ")}${pc.numbersSuffix}${a.timeFrom ? ` ${a.timeFrom}–${a.timeTo}` : ""}` };
+  return { main: pc.absenceGeneric, sub: "" };
 }
 
-function AbsencesPanel({ emp, onUpdate, dark }: {
-  emp: EmpData; onUpdate: (a: Absence[]) => void; dark: boolean;
+function AbsencesPanel({ emp, onUpdate, dark, label, pc }: {
+  emp: EmpData; onUpdate: (a: Absence[]) => void; dark: boolean; label?: string; pc?: PanelCopy;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [type, setType]       = useState<"sick"|"vacation"|"other">("sick");
@@ -1354,6 +1688,7 @@ function AbsencesPanel({ emp, onUpdate, dark }: {
   const [timeTo, setTimeTo]     = useState("");
   const [submitted, setSubmitted] = useState(false);
   const tc = colors(dark);
+  const pcp = pc ?? panelCopyRec.en;
   let nextId = useRef(100);
 
   const reset = () => { setType("sick"); setDateFrom(""); setDateTo(""); setRepeat("once"); setWeekDays([]); setMonthDays([]); setOnceDate(""); setTimeFrom(""); setTimeTo(""); setSubmitted(false); setShowForm(false); };
@@ -1372,28 +1707,26 @@ function AbsencesPanel({ emp, onUpdate, dark }: {
     const a: Absence = { id: nextId.current++, type, dateFrom, dateTo, repeat, onceDate, weekDays, monthDays, timeFrom: timeFrom || undefined, timeTo: timeTo || undefined };
     onUpdate([...emp.absences, a]); reset();
   };
-  const missingMessage = submitted && !canAdd && !dateInvalid
-    ? "Заполните обязательные поля для отсутствия."
-    : "";
+  const missingMessage = submitted && !canAdd && !dateInvalid ? pcp.missingAbsence : "";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <PanelHeader emp={emp} label="Отсутствия" dark={dark} />
+      <PanelHeader emp={emp} label={label ?? pcp.addAbsence} dark={dark} />
 
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {emp.absences.length === 0 && !showForm && (
           <div style={{ textAlign: "center", padding: "16px 0 20px" }}>
             <CalendarOff size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 10px" }} />
-            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: "0 0 6px", fontWeight: 500 }}>Нет отсутствий</p>
+            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: "0 0 6px", fontWeight: 500 }}>{pcp.noAbsences}</p>
             <p style={{ color: tc.faint, fontSize: "0.78rem", margin: "0 auto 16px", maxWidth: "260px", lineHeight: 1.55 }}>
-              Добавьте отпуск, больничный или регулярное отсутствие. Например, ежедневное отсутствие по утрам.
+              {pcp.noAbsencesHint}
             </p>
           </div>
         )}
 
         <AnimatePresence initial={false}>
           {emp.absences.map(a => {
-            const { main, sub } = absenceLabel(a);
+            const { main, sub } = absenceLabel(a, pcp);
             return <ItemRow key={a.id} label={main} sub={sub} dark={dark} onDelete={() => onUpdate(emp.absences.filter(x => x.id !== a.id))} />;
           })}
         </AnimatePresence>
@@ -1402,61 +1735,61 @@ function AbsencesPanel({ emp, onUpdate, dark }: {
           {showForm && (
             <FormBox dark={dark}>
               <div>
-                <Label text="Тип отсутствия" dark={dark} />
+                <Label text={pcp.absenceType} dark={dark} />
                 <Pills dark={dark} value={type} onChange={v => setType(v as any)}
-                  options={[{ value: "sick", label: "Больничный" }, { value: "vacation", label: "Отпуск" }, { value: "other", label: "Другое" }]} />
+                  options={[{ value: "sick", label: pcp.sick }, { value: "vacation", label: pcp.vacation }, { value: "other", label: pcp.other }]} />
               </div>
 
               {(type === "sick" || type === "vacation") && (
                 <div style={{ display: "flex", gap: "8px" }}>
                   <div style={{ flex: 1 }}>
-                    <Label text="С" dark={dark} />
+                    <Label text={pcp.dateFrom} dark={dark} />
                     <StyledInput type="date" value={dateFrom} onChange={setDateFrom} dark={dark} style={{ width: "100%" }} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <Label text="По" dark={dark} />
+                    <Label text={pcp.dateTo} dark={dark} />
                     <StyledInput type="date" value={dateTo} onChange={setDateTo} dark={dark} style={{ width: "100%" }} />
                   </div>
                 </div>
               )}
-              {dateInvalid && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-4px 0 0", lineHeight: 1.4 }}>Дата окончания не может быть раньше начала</p>}
+              {dateInvalid && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-4px 0 0", lineHeight: 1.4 }}>{pcp.dateError}</p>}
 
               {type === "other" && (
                 <>
                   <div>
-                    <Label text="Повторение" dark={dark} />
+                    <Label text={pcp.repeat} dark={dark} />
                     <Pills dark={dark} value={repeat} onChange={v => setRepeat(v as any)}
-                      options={[{ value: "once", label: "Разово" }, { value: "weekly", label: "Еженедельно" }, { value: "monthly", label: "Ежемесячно" }]} />
+                      options={[{ value: "once", label: pcp.once }, { value: "weekly", label: pcp.weekly }, { value: "monthly", label: pcp.monthly }]} />
                   </div>
                   {repeat === "once" && (
                     <div>
-                      <Label text="Дата" dark={dark} />
+                      <Label text={pcp.date} dark={dark} />
                       <StyledInput type="date" value={onceDate} onChange={setOnceDate} dark={dark} style={{ width: "100%" }} />
                     </div>
                   )}
                   {repeat === "weekly" && (
                     <div>
-                      <Label text="Дни недели" dark={dark} />
+                      <Label text={pcp.weekdays} dark={dark} />
                       <WeekDayPicker value={weekDays} onChange={setWeekDays} dark={dark} />
                     </div>
                   )}
                   {repeat === "monthly" && (
                     <div>
-                      <Label text="Числа месяца" dark={dark} />
+                      <Label text={pcp.monthdays} dark={dark} />
                       <MonthDayTagInput value={monthDays} onChange={setMonthDays} dark={dark} />
                     </div>
                   )}
                   <div style={{ display: "flex", gap: "8px" }}>
                     <div style={{ flex: 1 }}>
-                      <Label text="Время с (необязательно)" dark={dark} />
+                      <Label text={pcp.timeFromOpt} dark={dark} />
                       <StyledInput type="time" value={timeFrom} onChange={setTimeFrom} dark={dark} style={{ width: "100%" }} />
                     </div>
                     <div style={{ flex: 1 }}>
-                      <Label text="Время по" dark={dark} />
+                      <Label text={pcp.timeTo} dark={dark} />
                       <StyledInput type="time" value={timeTo} onChange={setTimeTo} dark={dark} style={{ width: "100%" }} />
                   </div>
                 </div>
-                {timeInvalid && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-4px 0 0", lineHeight: 1.4 }}>Время окончания должно быть позже начала</p>}
+                {timeInvalid && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-4px 0 0", lineHeight: 1.4 }}>{pcp.timeError}</p>}
                 </>
               )}
               {missingMessage && (
@@ -1466,24 +1799,25 @@ function AbsencesPanel({ emp, onUpdate, dark }: {
               )}
 
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                <button onClick={reset} style={{ padding: "9px 16px", borderRadius: "10px", border: `1px solid ${tc.inputBorder}`, background: "none", color: tc.sub, fontSize: "0.85rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Отмена</button>
-                <SaveBtn label="Добавить" onClick={handleAdd} />
+                <button onClick={reset} style={{ padding: "9px 16px", borderRadius: "10px", border: `1px solid ${tc.inputBorder}`, background: "none", color: tc.sub, fontSize: "0.85rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>{pcp.cancel}</button>
+                <SaveBtn label={pcp.add} onClick={handleAdd} />
               </div>
             </FormBox>
           )}
         </AnimatePresence>
 
-        {!showForm && <AddBtn label="Добавить отсутствие" onClick={() => setShowForm(true)} dark={dark} />}
+        {!showForm && <AddBtn label={pcp.addAbsence} onClick={() => setShowForm(true)} dark={dark} />}
       </div>
     </div>
   );
 }
 
 // ─── Hire / fire dates panel ──────────────────────────────────────────────────
-function HireDatesPanel({ emp, onUpdate, dark }: {
-  emp: EmpData; onUpdate: (hired: string, fired: string) => void; dark: boolean;
+function HireDatesPanel({ emp, onUpdate, dark, label, pc }: {
+  emp: EmpData; onUpdate: (hired: string, fired: string) => void; dark: boolean; label?: string; pc?: PanelCopy;
 }) {
   const tc = colors(dark);
+  const pcp = pc ?? panelCopyRec.en;
   const invalid = !!emp.hired && !!emp.fired && emp.fired < emp.hired;
   const [saved, setSaved] = useState(false);
   const save = () => {
@@ -1492,39 +1826,39 @@ function HireDatesPanel({ emp, onUpdate, dark }: {
   };
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <PanelHeader emp={emp} label="Найм и увольнение" dark={dark} />
-      <Desc text="Необязательная информация, но она позволит корректнее составить расписание и не назначить смену уволенному или ещё не вышедшему сотруднику." dark={dark} />
+      <PanelHeader emp={emp} label={label ?? pcp.hireDate} dark={dark} />
+      <Desc text={pcp.hireDateDesc} dark={dark} />
       <div>
-        <Label text="Дата найма" dark={dark} />
+        <Label text={pcp.hireDate} dark={dark} />
         <StyledInput type="date" value={emp.hired} onChange={v => onUpdate(v, emp.fired)} dark={dark} style={{ width: "100%" }} />
       </div>
       <div>
-        <Label text="Дата увольнения" dark={dark} />
+        <Label text={pcp.termDate} dark={dark} />
         <StyledInput type="date" value={emp.fired} onChange={v => onUpdate(emp.hired, v)} dark={dark} style={{ width: "100%" }} />
       </div>
-      {invalid && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-6px 0 0", lineHeight: 1.4 }}>Дата увольнения не может быть раньше даты найма</p>}
+      {invalid && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-6px 0 0", lineHeight: 1.4 }}>{pcp.termBeforeHireError}</p>}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
         <span style={{ color: saved ? (dark ? "#6ee7b7" : "#047857") : tc.faint, fontSize: "0.78rem" }}>
-          {saved ? "Сохранено" : "Даты сохраняются в карточке сотрудника"}
+          {saved ? pcp.savedOk : pcp.datesSavedInfo}
         </span>
-        <SaveBtn label="Сохранить" onClick={save} />
+        <SaveBtn label={pcp.save} onClick={save} />
       </div>
     </div>
   );
 }
 
 // ─── Time preferences panel ───────────────────────────────────────────────────
-function timePrefsLabel(p: TimePreference) {
-  const main = p.prefer === "prefer" ? "Удобно" : "Неудобно";
+function timePrefsLabel(p: TimePreference, pc: PanelCopy) {
+  const main = p.prefer === "prefer" ? pc.prefer : pc.avoid;
   const time = `${p.timeFrom}–${p.timeTo}`;
-  if (p.repeat === "daily")   return { main, sub: `Каждый день, ${time}` };
-  if (p.repeat === "weekly")  return { main, sub: `${(p.weekDays || []).map(i => WEEK_DAYS[i]).join(", ")}, ${time}` };
-  if (p.repeat === "monthly") return { main, sub: `${(p.monthDays || []).join(", ")} числа, ${time}` };
+  if (p.repeat === "daily")   return { main, sub: `${pc.daily}, ${time}` };
+  if (p.repeat === "weekly")  return { main, sub: `${(p.weekDays || []).map(i => pc.weekDays[i]).join(", ")}, ${time}` };
+  if (p.repeat === "monthly") return { main, sub: `${(p.monthDays || []).join(", ")}${pc.numbersSuffix}, ${time}` };
   return { main, sub: time };
 }
 
-function TimePrefsPanel({ emp, onUpdate, dark }: {
-  emp: EmpData; onUpdate: (p: TimePreference[]) => void; dark: boolean;
+function TimePrefsPanel({ emp, onUpdate, dark, label, pc }: {
+  emp: EmpData; onUpdate: (p: TimePreference[]) => void; dark: boolean; label?: string; pc?: PanelCopy;
 }) {
   const [showForm, setShowForm] = useState(false);
   const [prefer, setPrefer] = useState<"prefer"|"avoid">("prefer");
@@ -1535,6 +1869,7 @@ function TimePrefsPanel({ emp, onUpdate, dark }: {
   const [timeTo, setTimeTo] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const tc = colors(dark);
+  const pcp = pc ?? panelCopyRec.en;
   const nextId = useRef(200);
 
   const reset = () => { setPrefer("prefer"); setRepeat("daily"); setWeekDays([]); setMonthDays([]); setTimeFrom(""); setTimeTo(""); setSubmitted(false); setShowForm(false); };
@@ -1548,28 +1883,26 @@ function TimePrefsPanel({ emp, onUpdate, dark }: {
     const p: TimePreference = { id: nextId.current++, prefer, repeat, weekDays, monthDays, timeFrom, timeTo };
     onUpdate([...emp.timePrefs, p]); reset();
   };
-  const missingMessage = submitted && !canAdd && !timeInvalid
-    ? "Заполните время и выбранные дни."
-    : "";
+  const missingMessage = submitted && !canAdd && !timeInvalid ? pcp.missingTimePref : "";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <PanelHeader emp={emp} label="Временные предпочтения" dark={dark} />
+      <PanelHeader emp={emp} label={label ?? pcp.addPref} dark={dark} />
 
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {emp.timePrefs.length === 0 && !showForm && (
           <div style={{ textAlign: "center", padding: "16px 0 20px" }}>
             <Clock3 size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 10px" }} />
-            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: "0 0 6px", fontWeight: 500 }}>Предпочтений нет</p>
+            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: "0 0 6px", fontWeight: 500 }}>{pcp.noPrefs}</p>
             <p style={{ color: tc.faint, fontSize: "0.78rem", margin: "0 auto 16px", maxWidth: "260px", lineHeight: 1.55 }}>
-              Укажите, когда сотруднику удобно или неудобно работать. Постараемся учесть при генерации — но это мягкое условие, не жёсткое.
+              {pcp.noPrefsHint}
             </p>
           </div>
         )}
 
         <AnimatePresence initial={false}>
           {emp.timePrefs.map(p => {
-            const { main, sub } = timePrefsLabel(p);
+            const { main, sub } = timePrefsLabel(p, pcp);
             return <ItemRow key={p.id} label={main} sub={sub} dark={dark} onDelete={() => onUpdate(emp.timePrefs.filter(x => x.id !== p.id))} />;
           })}
         </AnimatePresence>
@@ -1578,59 +1911,60 @@ function TimePrefsPanel({ emp, onUpdate, dark }: {
           {showForm && (
             <FormBox dark={dark}>
               <div>
-                <Label text="Тип" dark={dark} />
+                <Label text={pcp.timeType} dark={dark} />
                 <Pills dark={dark} value={prefer} onChange={v => setPrefer(v as any)}
-                  options={[{ value: "prefer", label: "Удобно работать" }, { value: "avoid", label: "Неудобно работать" }]} />
+                  options={[{ value: "prefer", label: pcp.preferWork }, { value: "avoid", label: pcp.avoidWork }]} />
               </div>
               <div>
-                <Label text="Повторение" dark={dark} />
+                <Label text={pcp.repeatLabel} dark={dark} />
                 <Pills dark={dark} value={repeat} onChange={v => setRepeat(v as any)}
-                  options={[{ value: "daily", label: "Каждый день" }, { value: "weekly", label: "По дням недели" }, { value: "monthly", label: "По дням месяца" }]} />
+                  options={[{ value: "daily", label: pcp.daily }, { value: "weekly", label: pcp.byWeekday }, { value: "monthly", label: pcp.byMonthday }]} />
               </div>
               {repeat === "weekly" && (
                 <div>
-                  <Label text="Дни недели" dark={dark} />
+                  <Label text={pcp.weekdays} dark={dark} />
                   <WeekDayPicker value={weekDays} onChange={setWeekDays} dark={dark} />
                 </div>
               )}
               {repeat === "monthly" && (
                 <div>
-                  <Label text="Числа месяца" dark={dark} />
+                  <Label text={pcp.monthdays} dark={dark} />
                   <MonthDayTagInput value={monthDays} onChange={setMonthDays} dark={dark} />
                 </div>
               )}
               <div style={{ display: "flex", gap: "8px" }}>
                 <div style={{ flex: 1 }}>
-                  <Label text="С" dark={dark} />
+                  <Label text={pcp.dateFrom} dark={dark} />
                   <StyledInput type="time" value={timeFrom} onChange={setTimeFrom} dark={dark} style={{ width: "100%" }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <Label text="По" dark={dark} />
+                  <Label text={pcp.dateTo} dark={dark} />
                   <StyledInput type="time" value={timeTo} onChange={setTimeTo} dark={dark} style={{ width: "100%" }} />
                 </div>
               </div>
-              {timeInvalid && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-4px 0 0", lineHeight: 1.4 }}>Время окончания должно быть позже начала</p>}
+              {timeInvalid && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-4px 0 0", lineHeight: 1.4 }}>{pcp.timeError}</p>}
               {missingMessage && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-4px 0 0", lineHeight: 1.4 }}>{missingMessage}</p>}
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                <button onClick={reset} style={{ padding: "9px 16px", borderRadius: "10px", border: `1px solid ${colors(dark).inputBorder}`, background: "none", color: colors(dark).sub, fontSize: "0.85rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>Отмена</button>
-                <SaveBtn label="Добавить" onClick={handleAdd} />
+                <button onClick={reset} style={{ padding: "9px 16px", borderRadius: "10px", border: `1px solid ${colors(dark).inputBorder}`, background: "none", color: colors(dark).sub, fontSize: "0.85rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>{pcp.cancel}</button>
+                <SaveBtn label={pcp.add} onClick={handleAdd} />
               </div>
             </FormBox>
           )}
         </AnimatePresence>
 
-        {!showForm && <AddBtn label="Добавить предпочтение" onClick={() => setShowForm(true)} dark={dark} />}
+        {!showForm && <AddBtn label={pcp.addPref} onClick={() => setShowForm(true)} dark={dark} />}
       </div>
     </div>
   );
 }
 
 // ─── Social preferences panel ─────────────────────────────────────────────────
-function SocialPrefsPanel({ emp, allEmployees, onUpdate, dark }: {
+function SocialPrefsPanel({ emp, allEmployees, onUpdate, dark, label, pc }: {
   emp: EmpData; allEmployees: EmpData[];
-  onUpdate: (p: SocialPref[]) => void; dark: boolean;
+  onUpdate: (p: SocialPref[]) => void; dark: boolean; label?: string; pc?: PanelCopy;
 }) {
   const tc = colors(dark);
+  const pcp = pc ?? panelCopyRec.en;
   const others = allEmployees.filter(e => e.id !== emp.id);
   const nextId = useRef(300);
 
@@ -1644,15 +1978,15 @@ function SocialPrefsPanel({ emp, allEmployees, onUpdate, dark }: {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <PanelHeader emp={emp} label="Социальные предпочтения" dark={dark} />
-      <Desc text="Укажите, с кем сотрудник хочет или не хочет работать в смену. Постараемся учесть при составлении расписания, но это мягкое условие." dark={dark} />
+      <PanelHeader emp={emp} label={label ?? pcp.together} dark={dark} />
+      <Desc text={pcp.socialDesc} dark={dark} />
 
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {others.length === 0 ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <Users2 size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 10px" }} />
-            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: "0 0 4px", fontWeight: 500 }}>Нет других сотрудников</p>
-            <p style={{ color: tc.faint, fontSize: "0.78rem", margin: 0, lineHeight: 1.55 }}>Добавьте ещё одного сотрудника, чтобы настроить предпочтения</p>
+            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: "0 0 4px", fontWeight: 500 }}>{pcp.noOthers}</p>
+            <p style={{ color: tc.faint, fontSize: "0.78rem", margin: 0, lineHeight: 1.55 }}>{pcp.noOthersHint}</p>
           </div>
         ) : others.map(other => {
           const pref = getPref(other.id);
@@ -1666,10 +2000,10 @@ function SocialPrefsPanel({ emp, allEmployees, onUpdate, dark }: {
               <span style={{ flex: 1, color: tc.headline, fontSize: "0.88rem", fontWeight: 500 }}>{other.name}</span>
               <div style={{ display: "flex", gap: "5px" }}>
                 <button onClick={() => setType(other, isWith ? null : "with")} style={{ ...btnBase, background: isWith ? "linear-gradient(135deg,#10b981,#047857)" : tc.chipBg, color: isWith ? "#fff" : tc.sub, outline: isWith ? "none" : `1px solid ${tc.rowBorder}`, boxShadow: isWith ? "0 2px 8px rgba(16,185,129,0.3)" : "none" }}>
-                  <ThumbsUp size={11} strokeWidth={2} /> Вместе
+                  <ThumbsUp size={11} strokeWidth={2} /> {pcp.together}
                 </button>
                 <button onClick={() => setType(other, isWithout ? null : "without")} style={{ ...btnBase, background: isWithout ? "linear-gradient(135deg,#ef4444,#b91c1c)" : tc.chipBg, color: isWithout ? "#fff" : tc.sub, outline: isWithout ? "none" : `1px solid ${tc.rowBorder}`, boxShadow: isWithout ? "0 2px 8px rgba(239,68,68,0.3)" : "none" }}>
-                  <ThumbsDown size={11} strokeWidth={2} /> Раздельно
+                  <ThumbsDown size={11} strokeWidth={2} /> {pcp.separate}
                 </button>
               </div>
             </div>
@@ -1719,7 +2053,306 @@ function EmployeeRow({ emp, dark, onDelete, onChipClick }: { emp: EmpData; dark:
   );
 }
 
-// ─── Step 2 ───────────────────────────────────────────────────────────────────
+// ─── Step 1: Team ────────────────────────────────────────────────────────────
+function EmpTeamRow({ emp, activeFeature, onChipClick, onDelete, dark, actionLabels }: {
+  emp: EmpData; activeFeature: string | null;
+  onChipClick: (key: string) => void; onDelete: () => void;
+  dark: boolean; actionLabels: Record<string, string>;
+}) {
+  const tc = colors(dark);
+  return (
+    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.18 }}
+      style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px", borderRadius: "10px", border: `1px solid ${tc.rowBorder}`, marginBottom: "6px" }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+        <Avatar name={emp.name} size={32} />
+        <span style={{ flex: 1, color: tc.headline, fontSize: "0.9rem", fontWeight: 500, letterSpacing: "-0.01em" }}>{emp.name}</span>
+        <button onClick={onDelete} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", color: tc.iconMuted, transition: "color 0.15s", flexShrink: 0 }}
+          onMouseEnter={e => (e.currentTarget.style.color = "#f87171")} onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
+        ><Trash2 size={13} strokeWidth={1.8} /></button>
+      </div>
+      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+        {ACTIONS.map(({ key, icon: Icon }) => {
+          const isActive = activeFeature === key;
+          const hasDat = hasData(emp, key);
+          return (
+            <button key={key} onClick={() => onChipClick(key)} style={{
+              display: "inline-flex", alignItems: "center", gap: "5px",
+              padding: "4px 10px", borderRadius: "99px", cursor: "pointer",
+              background: isActive ? "linear-gradient(135deg,#a855f7,#ec4899)" : hasDat ? tc.chipActiveBg : tc.chipBg,
+              border: `1px solid ${isActive ? "transparent" : hasDat ? tc.chipActiveBorder : tc.rowBorder}`,
+              color: isActive ? "#fff" : hasDat ? tc.chipActiveFg : (dark ? "#c4bde0" : "#8878aa"),
+              fontSize: "0.72rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif",
+              transition: "all 0.15s", whiteSpace: "nowrap",
+              boxShadow: isActive ? "0 2px 8px rgba(168,85,247,0.3)" : "none",
+            }}>
+              <Icon size={11} strokeWidth={1.8} />{actionLabels[key] ?? key}
+            </button>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
+function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onAddRole, onRenameRole, onDeleteRole, onUpdateEmp, dark, copy, stepCopy, panelsCopy, panelCopy2 }: {
+  employees: EmpData[]; globalRoles: string[];
+  onAddEmployee: (name: string) => void; onDeleteEmployee: (id: number) => void;
+  onAddRole: (role: string) => void; onRenameRole: (from: string, to: string) => void;
+  onDeleteRole: (role: string) => void;
+  onUpdateEmp: (id: number, patch: Partial<EmpData>) => void;
+  dark: boolean; copy: typeof wizardCopy.ru; stepCopy: typeof wizardStepCopy.ru;
+  panelsCopy: typeof rolePanelCopy.en; panelCopy2: PanelCopy;
+}) {
+  const [empInput, setEmpInput] = useState("");
+  const [empFocused, setEmpFocused] = useState(false);
+  const [roleInput, setRoleInput] = useState("");
+  const [roleFocused, setRoleFocused] = useState(false);
+  const [editingRole, setEditingRole] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState("");
+  // Which employee+feature is shown in right panel. null = show global roles.
+  const [selected, setSelected] = useState<{ empId: number; feature: string } | null>(null);
+  const [draftEmp, setDraftEmp] = useState<EmpData | null>(null);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 639px)").matches);
+  const [mobileRolesOpen, setMobileRolesOpen] = useState(false);
+  const empRef = useRef<HTMLInputElement>(null);
+  const tc = colors(dark);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 639px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const handleAddEmp = () => { const t = empInput.trim(); if (!t) return; onAddEmployee(t); setEmpInput(""); empRef.current?.focus(); };
+  const handleAddRole = () => { const v = roleInput.trim(); if (!v) return; onAddRole(v); setRoleInput(""); };
+  const saveRename = () => {
+    if (!editingRole) return;
+    const v = editingValue.trim();
+    if (v) onRenameRole(editingRole, v);
+    setEditingRole(null); setEditingValue("");
+  };
+
+  const openFeature = (empId: number, feature: string) => {
+    if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp);
+    const emp = employees.find(e => e.id === empId);
+    if (emp) setDraftEmp(cloneEmployee(emp));
+    setSelected({ empId, feature });
+  };
+  const saveAndClose = () => {
+    if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp);
+    setDraftEmp(null); setSelected(null); setMobileRolesOpen(false);
+  };
+  const updateDraft = (patch: Partial<EmpData>) => setDraftEmp(prev => prev ? { ...prev, ...patch } : prev);
+  const toggleDraftRole = (empId: number, role: string) => {
+    setDraftEmp(prev => {
+      if (!prev || prev.id !== empId) return prev;
+      return { ...prev, roles: prev.roles.includes(role) ? prev.roles.filter(r => r !== role) : [...prev.roles, role] };
+    });
+  };
+
+  const activeEmp = draftEmp ?? (selected ? employees.find(e => e.id === selected.empId) : null);
+
+  const renderFeaturePanel = () => {
+    if (!selected || !activeEmp) return null;
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+          {selected.feature === "roles"       && <RolesPanel emp={activeEmp} globalRoles={globalRoles} onToggleRole={toggleDraftRole} onAddRole={onAddRole} dark={dark} label={actionLabels.roles} pCopy={panelsCopy} />}
+          {selected.feature === "absences"    && <AbsencesPanel emp={activeEmp} onUpdate={a => updateDraft({ absences: a })} dark={dark} label={actionLabels.absences} pc={panelCopy2} />}
+          {selected.feature === "dates"       && <HireDatesPanel emp={activeEmp} onUpdate={(h, f) => updateDraft({ hired: h, fired: f })} dark={dark} label={actionLabels.dates} pc={panelCopy2} />}
+          {selected.feature === "timePrefs"   && <TimePrefsPanel emp={activeEmp} onUpdate={p => updateDraft({ timePrefs: p })} dark={dark} label={actionLabels.timePrefs} pc={panelCopy2} />}
+          {selected.feature === "socialPrefs" && <SocialPrefsPanel emp={activeEmp} allEmployees={employees} onUpdate={p => updateDraft({ socialPrefs: p })} dark={dark} label={actionLabels.socialPrefs} pc={panelCopy2} />}
+        </div>
+        <div style={{ paddingTop: "12px", display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
+          <button onClick={saveAndClose} style={{ padding: "10px 20px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", fontSize: "0.875rem", fontWeight: 600, fontFamily: "'DM Sans',sans-serif", boxShadow: "0 3px 12px rgba(168,85,247,0.3)" }}>
+            {copy.done}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderRolesPanel = () => (
+    <div style={{ display: "flex", flexDirection: "column", gap: "10px", height: "100%", minHeight: 0 }}>
+      <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1rem", margin: 0, letterSpacing: "-0.02em" }}>{stepCopy.rolesTitle}</p>
+      <div style={{ display: "flex", gap: "6px" }}>
+        <input value={roleInput} onChange={e => setRoleInput(e.target.value)}
+          onFocus={() => setRoleFocused(true)} onBlur={() => setRoleFocused(false)}
+          onKeyDown={e => { if (e.key === "Enter") handleAddRole(); }}
+          placeholder={stepCopy.rolePlaceholder}
+          style={{ flex: 1, background: tc.inputBg, border: `1.5px solid ${roleFocused ? "#a855f7" : tc.inputBorder}`, borderRadius: "10px", padding: "11px 14px", color: tc.headline, fontSize: "0.9rem", fontFamily: "'DM Sans',sans-serif", outline: "none", transition: "border-color 0.18s", boxSizing: "border-box" as const }}
+        />
+        <button onClick={handleAddRole} style={{ background: roleInput.trim() ? "linear-gradient(135deg,#a855f7,#ec4899)" : (dark ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.06)"), border: `1.5px solid ${roleInput.trim() ? "transparent" : tc.inputBorder}`, borderRadius: "10px", cursor: roleInput.trim() ? "pointer" : "default", padding: "0 14px", display: "flex", alignItems: "center", color: roleInput.trim() ? "#fff" : tc.iconMuted, transition: "all 0.18s", flexShrink: 0 }}>
+          <Plus size={16} strokeWidth={2} />
+        </button>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+        {globalRoles.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "24px 0" }}>
+            <Tag size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 8px" }} />
+            <p style={{ color: tc.sub, fontSize: "0.82rem", margin: "0 0 2px", fontWeight: 500 }}>{stepCopy.rolesEmpty}</p>
+            <p style={{ color: tc.faint, fontSize: "0.74rem", margin: 0 }}>{stepCopy.rolesHint}</p>
+          </div>
+        ) : globalRoles.map(role => (
+          <div key={role} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 10px", borderRadius: "10px", border: `1px solid ${tc.rowBorder}`, marginBottom: "6px" }}>
+            <Tag size={14} strokeWidth={1.8} style={{ color: dark ? "#c4b5fd" : "#7c3aed", flexShrink: 0 }} />
+            {editingRole === role ? (
+              <input value={editingValue} onChange={e => setEditingValue(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") saveRename(); if (e.key === "Escape") setEditingRole(null); }}
+                autoFocus
+                style={{ flex: 1, minWidth: 0, background: tc.inputBg, border: `1.5px solid #a855f7`, borderRadius: "8px", padding: "6px 10px", color: tc.headline, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", outline: "none", boxSizing: "border-box" as const }}
+              />
+            ) : (
+              <button onClick={() => { setEditingRole(role); setEditingValue(role); }}
+                style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, color: tc.headline, fontSize: "0.88rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", textAlign: "left", cursor: "pointer" }}
+              >{role}</button>
+            )}
+            {editingRole === role && (
+              <button onClick={saveRename} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: dark ? "#c4b5fd" : "#7c3aed", display: "flex" }}>
+                <Check size={13} strokeWidth={2.2} />
+              </button>
+            )}
+            <button onClick={() => onDeleteRole(role)} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: tc.iconMuted, display: "flex", borderRadius: "6px", transition: "color 0.15s", flexShrink: 0 }}
+              onMouseEnter={e => (e.currentTarget.style.color = "#f87171")} onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
+            ><Trash2 size={13} strokeWidth={1.8} /></button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderRightPanel = () => {
+    if (selected && activeEmp) return renderFeaturePanel();
+    return renderRolesPanel();
+  };
+
+  const actionLabels: Record<string, string> = {
+    roles: copy.actions.roles, absences: copy.actions.absences,
+    dates: copy.actions.dates, timePrefs: copy.actions.timePrefs, socialPrefs: copy.actions.socialPrefs,
+  };
+
+  const sheetOpen = selected !== null || mobileRolesOpen;
+  const sheetTitle = selected
+    ? `${activeEmp?.name ?? ""} · ${actionLabels[selected.feature] ?? selected.feature}`
+    : stepCopy.rolesTitle;
+
+  const empListSection = (
+    <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+      <AnimatePresence>
+        {employees.length === 0 ? (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ textAlign: "center", padding: "24px 0" }}>
+            <UserRound size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 8px" }} />
+            <p style={{ color: tc.sub, fontSize: "0.82rem", margin: "0 0 2px", fontWeight: 500 }}>{stepCopy.employeesEmpty}</p>
+            <p style={{ color: tc.faint, fontSize: "0.74rem", margin: 0 }}>{stepCopy.employeesHint}</p>
+          </motion.div>
+        ) : employees.map(emp => (
+          <EmpTeamRow key={emp.id} emp={draftEmp?.id === emp.id ? draftEmp : emp}
+            activeFeature={selected?.empId === emp.id ? selected.feature : null}
+            onChipClick={key => openFeature(emp.id, key)}
+            onDelete={() => { if (selected?.empId === emp.id) { setSelected(null); setDraftEmp(null); } onDeleteEmployee(emp.id); }}
+            dark={dark} actionLabels={actionLabels}
+          />
+        ))}
+      </AnimatePresence>
+    </div>
+  );
+
+  const empInputSection = (
+    <div style={{ display: "flex", gap: "6px" }}>
+      <input ref={empRef} value={empInput} onChange={e => setEmpInput(e.target.value)}
+        onFocus={() => setEmpFocused(true)} onBlur={() => setEmpFocused(false)}
+        onKeyDown={e => { if (e.key === "Enter") handleAddEmp(); }}
+        placeholder={stepCopy.employeePlaceholder}
+        style={{ flex: 1, background: tc.inputBg, border: `1.5px solid ${empFocused ? "#a855f7" : tc.inputBorder}`, borderRadius: "10px", padding: "11px 14px", color: tc.headline, fontSize: "0.9rem", fontFamily: "'DM Sans',sans-serif", outline: "none", transition: "border-color 0.18s", boxSizing: "border-box" as const }}
+      />
+      <button onClick={handleAddEmp} style={{ background: empInput.trim() ? "linear-gradient(135deg,#a855f7,#ec4899)" : (dark ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.06)"), border: `1.5px solid ${empInput.trim() ? "transparent" : tc.inputBorder}`, borderRadius: "10px", cursor: empInput.trim() ? "pointer" : "default", padding: "0 14px", display: "flex", alignItems: "center", color: empInput.trim() ? "#fff" : tc.iconMuted, transition: "all 0.18s", flexShrink: 0 }}>
+        <Plus size={16} strokeWidth={2} />
+      </button>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", height: "100%", minHeight: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1rem", margin: 0, letterSpacing: "-0.02em" }}>{stepCopy.employeesTitle}</p>
+          <button
+            onClick={() => { if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp); setDraftEmp(null); setSelected(null); setMobileRolesOpen(true); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.8rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}
+          >
+            <Tag size={12} strokeWidth={1.8} />{stepCopy.rolesTitle}
+            {globalRoles.length > 0 && <span style={{ background: dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.15)", borderRadius: "99px", padding: "1px 7px", fontSize: "0.72rem", fontWeight: 600 }}>{globalRoles.length}</span>}
+          </button>
+        </div>
+        {empInputSection}
+        {empListSection}
+
+        <AnimatePresence>
+          {sheetOpen && (
+            <>
+              <motion.div key="backdrop"
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={saveAndClose}
+                style={{ position: "fixed", inset: 0, zIndex: 99, background: "rgba(0,0,0,0.48)", backdropFilter: "blur(2px)" }}
+              />
+              <motion.div key="sheet"
+                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 32, stiffness: 320 }}
+                style={{
+                  position: "fixed", bottom: 0, left: 0, right: 0,
+                  height: "78dvh", borderRadius: "20px 20px 0 0",
+                  background: dark ? "#14121e" : "#ffffff",
+                  borderTop: `1px solid ${tc.rowBorder}`,
+                  zIndex: 100, display: "flex", flexDirection: "column", overflow: "hidden",
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 20px 4px", flexShrink: 0 }}>
+                  <div style={{ width: "36px", height: "4px", borderRadius: "2px", background: tc.faint, marginBottom: "12px" }} />
+                  <p style={{ margin: 0, color: tc.headline, fontWeight: 600, fontSize: "0.9rem", letterSpacing: "-0.01em", alignSelf: "flex-start" }}>{sheetTitle}</p>
+                </div>
+                <div style={{ flex: 1, minHeight: 0, padding: "12px 20px 24px", display: "flex", flexDirection: "column" }}>
+                  {selected ? renderFeaturePanel() : renderRolesPanel()}
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", gap: "20px", height: "100%", minHeight: 0 }}>
+      {/* Left: employees */}
+      <div style={{ flex: "0 0 min(52%, 340px)", minWidth: 0, display: "flex", flexDirection: "column", gap: "10px", minHeight: 0 }}>
+        <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1rem", margin: 0, letterSpacing: "-0.02em" }}>{stepCopy.employeesTitle}</p>
+        {empInputSection}
+        {empListSection}
+      </div>
+
+      {/* Divider */}
+      <div style={{ width: "1px", background: tc.rowBorder, flexShrink: 0, alignSelf: "stretch" }} />
+
+      {/* Right: roles or feature panel */}
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+        <AnimatePresence mode="wait">
+          <motion.div key={selected ? `${selected.empId}-${selected.feature}` : "roles"}
+            initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.16 }}
+            style={{ height: "100%", display: "flex", flexDirection: "column" }}
+          >
+            {renderRightPanel()}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    </div>
+  );
+}
+
+// ─── Legacy Step 2 (kept for reference) ──────────────────────────────────────
 function SimpleEmployeeRow({ emp, dark, onDelete }: { emp: EmpData; dark: boolean; onDelete: () => void }) {
   const tc = colors(dark);
   return (
@@ -2139,47 +2772,58 @@ function StepEmployeeConfig({ employees, globalRoles, onAddRole, onUpdateEmp, da
   );
 }
 
-interface WizardProps { open: boolean; onClose: () => void; dark: boolean; language: LanguageCode; }
+const TOTAL_STEPS = 4;
 
-export function Wizard({ open, onClose, dark, language }: WizardProps) {
-  const [step, setStep]           = useState(1);
-  const [scheduleName, setScheduleName] = useState("");
-  const [employees, setEmployees] = useState<EmpData[]>([]);
-  const [globalRoles, setGlobalRoles] = useState<string[]>([]);
-  const [nextId, setNextId]       = useState(1);
-  const [step3Data, setStep3Data] = useState<Step3Data>(defaultStep3());
-  const [step5Data, setStep5Data] = useState<Step5Data>(defaultStep5());
-  const [editing, setEditing]     = useState<{ empId: number; feature: string } | null>(null);
+interface WizardProps { dark: boolean; language: LanguageCode; onBack: () => void; onSignUp?: () => void; }
+
+const DRAFT_KEY = "shifty-wizard-draft";
+function readDraft(): Record<string, unknown> {
+  try { return JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null") ?? {}; } catch { return {}; }
+}
+
+export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
+  const [step, setStep]           = useState<number>(() => { const d = readDraft(); return typeof d.step === "number" ? d.step : 1; });
+  const [scheduleName, setScheduleName] = useState<string>(() => (readDraft().scheduleName as string) ?? "");
+  const [employees, setEmployees] = useState<EmpData[]>(() => (readDraft().employees as EmpData[]) ?? []);
+  const [globalRoles, setGlobalRoles] = useState<string[]>(() => (readDraft().globalRoles as string[]) ?? []);
+  const [nextId, setNextId]       = useState<number>(() => {
+    const emps = (readDraft().employees as EmpData[]) ?? [];
+    return emps.reduce((m, e) => Math.max(m, e.id), 0) + 1;
+  });
+  const [step3Data, setStep3Data] = useState<Step3Data>(() => (readDraft().step3Data as Step3Data) ?? defaultStep3());
+  const [step5Data, setStep5Data] = useState<Step5Data>(() => (readDraft().step5Data as Step5Data) ?? defaultStep5());
   const [generationOpen, setGenerationOpen] = useState(false);
+  const [generationPhase, setGenerationPhase] = useState<"loading" | "done">("loading");
   const [continueAttempted, setContinueAttempted] = useState(false);
 
   const copy = wizardCopy[language] ?? wizardCopy.ru;
   const stepCopy = wizardStepCopy[language] ?? wizardStepCopy.ru;
+  const genC = genCopy[language] ?? genCopy.en;
+  const stepTitles = stepTitlesCopy[language] ?? stepTitlesCopy.en;
+
+  useEffect(() => { setContinueAttempted(false); }, [step]);
 
   useEffect(() => {
-    if (open) {
-      setEditing(null);
-      setGenerationOpen(false);
-      setContinueAttempted(false);
-    }
-  }, [open]);
+    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ step, employees, globalRoles, scheduleName, step3Data, step5Data })); }
+    catch {}
+  }, [step, employees, globalRoles, scheduleName, step3Data, step5Data]);
 
   useEffect(() => {
-    setContinueAttempted(false);
-  }, [step]);
+    if (!generationOpen || generationPhase !== "loading") return;
+    const t = setTimeout(() => setGenerationPhase("done"), 5000);
+    return () => clearTimeout(t);
+  }, [generationOpen, generationPhase]);
 
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") { if (generationOpen) setGenerationOpen(false); else onBack(); }
+    };
     window.addEventListener("keydown", h); return () => window.removeEventListener("keydown", h);
-  }, [onClose]);
+  }, [onBack, generationOpen]);
 
   const addEmployee = (name: string) => {
     setEmployees(p => [...p, { id: nextId, name, roles: [], absences: [], hired: "", fired: "", timePrefs: [], socialPrefs: [] }]);
     setNextId(n => n + 1);
-  };
-
-  const toggleRole = (empId: number, role: string) => {
-    setEmployees(p => p.map(e => e.id !== empId ? e : { ...e, roles: e.roles.includes(role) ? e.roles.filter(r => r !== role) : [...e.roles, role] }));
   };
 
   const addRole = (role: string) => {
@@ -2199,220 +2843,171 @@ export function Wizard({ open, onClose, dark, language }: WizardProps) {
     setStep3Data(p => ({ ...p, configs: p.configs.map(c => ({ ...c, shifts: c.shifts.map(s => s.role === role ? { ...s, role: "" } : s) })) }));
   };
 
-  const updateEmp = (id: number, patch: Partial<EmpData>) => {
-    setEmployees(p => p.map(e => e.id !== id ? e : { ...e, ...patch }));
-  };
-
-  const bg        = dark ? "#111018" : "#ffffff";
-  const border    = dark ? "rgba(168,85,247,0.12)" : "rgba(168,85,247,0.14)";
+  const bg     = dark ? "#08080c" : "#faf8ff";
+  const border = dark ? "rgba(168,85,247,0.12)" : "rgba(168,85,247,0.14)";
   const stepLabel = dark ? "#c4bde0" : "#a89ec0";
-  const overlayBg = dark ? "rgba(0,0,0,0.65)" : "rgba(15,10,30,0.35)";
 
-  const inFeature   = false;
-  const editingEmp  = inFeature ? employees.find(e => e.id === editing!.empId) : null;
-  const featureHasData = editingEmp ? hasData(editingEmp, editing!.feature) : false;
-  const btnDisabled = inFeature && editing!.feature === "roles" && !featureHasData;
-  const featureLabels: Record<string, string> = { roles: copy.done, absences: copy.done, dates: copy.done, timePrefs: copy.done, socialPrefs: copy.done };
-  const rightBtnLabel = inFeature
-    ? (featureLabels[editing!.feature] ?? copy.done)
-    : step === 6 ? copy.generate
-    : copy.continue;
   const validationMessage =
     step === 1 && employees.length === 0 ? copy.validation.employees
-    : step === 2 && globalRoles.length === 0 ? copy.validation.roles
-    : step === 4 && !hasAnyShift(step3Data) ? copy.validation.shifts
-    : step === 4 && hasInvalidShiftTimes(step3Data) ? copy.validation.shiftTime
-    : step === 5 && hasInvalidBreakTimes(step5Data) ? copy.validation.breakTime
-    : step === 6 && hasUnassignedEmployees(employees) ? copy.validation.employeeRoles
-    : step === 6 && hasEmployeeValidationErrors(employees) ? copy.validation.employeeSettings
+    : step === 1 && globalRoles.length === 0 ? copy.validation.roles
+    : step === 1 && hasUnassignedEmployees(employees) ? copy.validation.employeeRoles
+    : step === 3 && !hasAnyShift(step3Data) ? copy.validation.shifts
+    : step === 3 && hasInvalidShiftTimes(step3Data) ? copy.validation.shiftTime
+    : step === 4 && hasInvalidBreakTimes(step5Data) ? copy.validation.breakTime
     : "";
   const showValidationMessage = continueAttempted && !!validationMessage;
 
+  const rightBtnLabel = step === TOTAL_STEPS ? copy.generate : copy.continue;
+
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} onClick={onClose}
-            style={{ position: "fixed", inset: 0, background: overlayBg, backdropFilter: "blur(6px)", zIndex: 50 }} />
+    <div style={{ minHeight: "100dvh", background: bg, fontFamily: "'DM Sans',sans-serif", display: "flex", flexDirection: "column" }}>
+      {/* Glow */}
+      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", background: "radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.13), rgba(236,72,153,0.05) 42%, transparent 72%)", zIndex: 0 }} />
 
-          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            onClick={e => e.stopPropagation()} className="wizard-modal"
-            style={{ position: "fixed", zIndex: 51, background: bg, display: "flex", flexDirection: "column", boxSizing: "border-box", top: 0, left: 0, right: 0, bottom: 0, borderRadius: 0, padding: "28px 24px 36px" }}
+      {/* Header */}
+      <header style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px clamp(16px, 5vw, 48px)" }}>
+        <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: "6px", border: "none", background: "transparent", color: stepLabel, cursor: "pointer", fontFamily: "inherit", fontSize: "0.88rem" }}>
+          <House size={15} strokeWidth={1.8} />
+        </button>
+        <span style={{ background: "linear-gradient(120deg,#c084fc,#ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: "1rem", fontWeight: 600, letterSpacing: "-0.02em" }}>Shifty</span>
+      </header>
+
+      {/* Progress + step title */}
+      <div style={{ position: "relative", zIndex: 10, padding: "0 clamp(16px, 5vw, 48px) 0" }}>
+        <ProgressBar step={step} total={TOTAL_STEPS} stepNames={stepTitles} onStepClick={setStep} />
+        <AnimatePresence mode="wait">
+          <motion.h2 key={step} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.2 }}
+            style={{ margin: "14px 0 16px", fontSize: "clamp(1.15rem, 3vw, 1.45rem)", fontWeight: 650, letterSpacing: "-0.025em", color: dark ? "#f0ecff" : "#0f0a1e" }}
+          >{stepTitles[step - 1]}</motion.h2>
+        </AnimatePresence>
+      </div>
+
+      {/* Content */}
+      <main style={{ position: "relative", zIndex: 10, flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "0 clamp(16px, 5vw, 48px)", overflow: "hidden" }}>
+        <AnimatePresence mode="wait">
+          <motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", maxWidth: step === 1 ? "1040px" : "700px", width: "100%", margin: "0 auto", alignSelf: "center" }}
           >
-            {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "20px" }}>
-              <span style={{ color: stepLabel, fontSize: "0.78rem", letterSpacing: "0.04em" }}>{copy.step} {step}/{TOTAL_STEPS}</span>
-              <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: stepLabel, display: "flex" }}><X size={16} /></button>
-            </div>
-
-            <div style={{ marginBottom: "32px" }}><ProgressBar step={step} total={TOTAL_STEPS} /></div>
-
-            {/* Content */}
-            <div style={{ flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-              <AnimatePresence mode="wait">
-                <motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
-                  transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                  style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}
-                >
-                  {step === 1 && (
-                    <StepEmployees employees={employees}
-                      onAdd={addEmployee} onDelete={id => setEmployees(p => p.filter(e => e.id !== id))}
-                      dark={dark}
-                      copy={stepCopy}
-                    />
-                  )}
-                  {step === 2 && <StepRoles roles={globalRoles} onAdd={addRole} onRename={renameRole} onDelete={deleteRole} dark={dark} copy={stepCopy} />}
-                  {step === 3 && <StepThree data={step3Data} onChange={setStep3Data} dark={dark} />}
-                  {step === 4 && <StepFour data={step3Data} onChange={setStep3Data} globalRoles={globalRoles} onGoToStep={setStep} dark={dark} />}
-                  {step === 5 && <StepFive data={step5Data} onChange={setStep5Data} scheduleName={scheduleName} onScheduleNameChange={setScheduleName} scheduleCopy={copy.schedule} dark={dark} />}
-                  {step === 6 && (
-                    <StepEmployeeConfig employees={employees} globalRoles={globalRoles}
-                      onAddRole={addRole} onUpdateEmp={updateEmp}
-                      dark={dark} editing={editing} setEditing={setEditing}
-                      showProblems={continueAttempted && step === 6}
-                      copy={copy}
-                    />
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            {/* Footer */}
-            <div style={{ paddingTop: "20px" }}>
-              {showValidationMessage && (
-                <div style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "8px",
-                  padding: "10px 12px",
-                  borderRadius: "10px",
-                  marginBottom: "12px",
-                  background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)",
-                  border: "1px solid rgba(248,113,113,0.24)",
-                  color: "#f87171",
-                  fontSize: "0.78rem",
-                  lineHeight: 1.45,
-                }}>
-                  <AlertCircle size={14} strokeWidth={1.9} style={{ flex: "0 0 auto", marginTop: "1px" }} />
-                  <span>{validationMessage}</span>
-                </div>
-              )}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <a onClick={() => inFeature ? setEditing(null) : step > 1 ? setStep(s => s - 1) : undefined}
-                  style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: inFeature ? (dark ? "#c4b5fd" : "#7c3aed") : stepLabel, fontSize: "0.875rem", cursor: step > 1 || inFeature ? "pointer" : "default", textDecoration: "none", transition: "opacity 0.15s", visibility: step > 1 || inFeature ? "visible" : "hidden" }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.7")}
-                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-                >
-                  {(step > 1 || inFeature) && <ChevronLeft size={14} strokeWidth={2.5} />}
-                  {copy.back}
-                </a>
-
-                <button disabled={btnDisabled}
-                  onClick={() => {
-                    if (inFeature) { setEditing(null); return; }
-                    if (validationMessage) { setContinueAttempted(true); return; }
-                    if (step === 6) {
-                      setGenerationOpen(true);
-                      return;
-                    }
-                    setStep(s => Math.min(s + 1, TOTAL_STEPS));
-                  }}
-                  style={{ display: "inline-flex", alignItems: "center", padding: "13px 16px", borderRadius: "10px", background: btnDisabled ? (dark ? "rgba(168,85,247,0.12)" : "rgba(168,85,247,0.08)") : "linear-gradient(135deg,#a855f7 0%,#ec4899 100%)", color: btnDisabled ? (dark ? "#4a4468" : "#c4b8d8") : "#fff", fontSize: "0.95rem", fontWeight: 500, border: "none", cursor: btnDisabled ? "default" : "pointer", fontFamily: "'DM Sans',sans-serif", boxShadow: btnDisabled ? "none" : "0 4px 20px rgba(168,85,247,0.3)", transition: "all 0.18s ease", whiteSpace: "nowrap" }}
-                  onMouseEnter={e => { if (!btnDisabled) { e.currentTarget.style.filter = "brightness(1.07)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(168,85,247,0.45)"; } }}
-                  onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.boxShadow = btnDisabled ? "none" : "0 4px 20px rgba(168,85,247,0.3)"; }}
-                >{rightBtnLabel}</button>
-              </div>
-            </div>
-
-            <AnimatePresence>
-              {generationOpen && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.16 }}
-                    onClick={() => setGenerationOpen(false)}
-                    style={{
-                      position: "fixed",
-                      inset: 0,
-                      background: dark ? "rgba(0,0,0,0.36)" : "rgba(15,10,30,0.18)",
-                      backdropFilter: "blur(3px)",
-                      zIndex: 70,
-                    }}
-                  />
-                  <motion.div
-                    initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 18px)", scale: 0.98 }}
-                    animate={{ opacity: 1, x: "-50%", y: "-50%", scale: 1 }}
-                    exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 18px)", scale: 0.98 }}
-                    transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                    style={{
-                      position: "fixed",
-                      left: "50%",
-                      top: "50%",
-                      zIndex: 71,
-                      width: "min(360px, calc(100vw - 32px))",
-                      padding: "24px",
-                      borderRadius: "18px",
-                      border: `1px solid ${border}`,
-                      background: dark ? "#111018" : "#ffffff",
-                      boxShadow: dark ? "0 24px 80px rgba(0,0,0,0.62)" : "0 24px 70px rgba(15,10,30,0.18)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <div style={{
-                      width: "42px",
-                      height: "42px",
-                      margin: "0 auto 14px",
-                      borderRadius: "14px",
-                      background: "linear-gradient(135deg,#a855f7,#ec4899)",
-                      boxShadow: "0 12px 30px rgba(168,85,247,0.32)",
-                    }} />
-                    <p style={{ color: dark ? "#f0ecff" : "#0f0a1e", fontSize: "1.08rem", fontWeight: 650, margin: "0 0 8px", letterSpacing: "-0.02em" }}>
-                      {copy.generationTitle}
-                    </p>
-                    <p style={{ color: stepLabel, fontSize: "0.82rem", lineHeight: 1.6, margin: "0 0 18px" }}>
-                      {copy.generationText}
-                    </p>
-                    <button
-                      onClick={() => setGenerationOpen(false)}
-                      style={{
-                        width: "100%",
-                        padding: "11px 14px",
-                        borderRadius: "10px",
-                        border: "none",
-                        background: "linear-gradient(135deg,#a855f7,#ec4899)",
-                        color: "#fff",
-                        cursor: "pointer",
-                        fontFamily: "'DM Sans',sans-serif",
-                        fontSize: "0.9rem",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {copy.ok}
-                    </button>
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
+            {step === 1 && (
+              <StepTeam
+                employees={employees} globalRoles={globalRoles}
+                onAddEmployee={addEmployee} onDeleteEmployee={id => setEmployees(p => p.filter(e => e.id !== id))}
+                onAddRole={addRole} onRenameRole={renameRole} onDeleteRole={deleteRole}
+                onUpdateEmp={(id, patch) => setEmployees(p => p.map(e => e.id !== id ? e : { ...e, ...patch }))}
+                dark={dark} copy={copy} stepCopy={stepCopy}
+                panelsCopy={rolePanelCopy[language] ?? rolePanelCopy.en}
+                panelCopy2={panelCopyRec[language] ?? panelCopyRec.en}
+              />
+            )}
+            {step === 2 && <StepThree data={step3Data} onChange={setStep3Data} dark={dark} language={language} />}
+            {step === 3 && <StepFour data={step3Data} onChange={setStep3Data} globalRoles={globalRoles} onGoToStep={setStep} dark={dark} language={language} />}
+            {step === 4 && <StepFive data={step5Data} onChange={setStep5Data} scheduleName={scheduleName} onScheduleNameChange={setScheduleName} scheduleCopy={copy.schedule} dark={dark} />}
           </motion.div>
+        </AnimatePresence>
+      </main>
 
-          <style>{`
-            @media (min-width: 768px) {
-              .wizard-modal {
-                top: 50% !important; left: 50% !important;
-                right: auto !important; bottom: auto !important;
-                transform: translate(-50%, -50%) !important;
-                width: 540px !important; max-height: 88vh !important;
-                border-radius: 20px !important; padding: 32px !important;
-                border: 1px solid ${border};
-                box-shadow: ${dark ? "0 24px 80px rgba(0,0,0,0.6)" : "0 24px 80px rgba(15,10,30,0.16)"};
-              }
-            }
-          `}</style>
-        </>
-      )}
-    </AnimatePresence>
+      {/* Footer */}
+      <footer style={{ position: "relative", zIndex: 10, padding: "16px clamp(16px, 5vw, 48px) clamp(24px, 5vw, 40px)" }}>
+        {showValidationMessage && (
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "12px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)", color: "#f87171", fontSize: "0.78rem", lineHeight: 1.45 }}>
+            <AlertCircle size={14} strokeWidth={1.9} style={{ flex: "0 0 auto", marginTop: "1px" }} />
+            <span>{validationMessage}</span>
+          </div>
+        )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a onClick={() => step > 1 ? setStep(s => s - 1) : onBack()}
+            style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s", visibility: step > 1 ? "visible" : "hidden" }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.7")}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+          >
+            <ChevronLeft size={14} strokeWidth={2.5} />{stepTitles[step - 2]}
+          </a>
+          <button
+            onClick={() => {
+              if (validationMessage) { setContinueAttempted(true); return; }
+              if (step === TOTAL_STEPS) { setGenerationPhase("loading"); setGenerationOpen(true); return; }
+              setStep(s => s + 1);
+            }}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "13px 22px", borderRadius: "10px", background: "linear-gradient(135deg,#a855f7 0%,#ec4899 100%)", color: "#fff", fontSize: "0.95rem", fontWeight: 500, border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", boxShadow: "0 4px 20px rgba(168,85,247,0.3)", transition: "all 0.18s ease", whiteSpace: "nowrap" }}
+            onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.07)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(168,85,247,0.45)"; }}
+            onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(168,85,247,0.3)"; }}
+          >{rightBtnLabel}</button>
+        </div>
+      </footer>
+
+      {/* Generation dialog */}
+      <AnimatePresence>
+        {generationOpen && (
+          <>
+            {/* Backdrop — only dismiss when done */}
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+              onClick={() => generationPhase === "done" && setGenerationOpen(false)}
+              style={{ position: "fixed", inset: 0, background: dark ? "rgba(0,0,0,0.58)" : "rgba(15,10,30,0.3)", backdropFilter: "blur(6px)", zIndex: 70, cursor: generationPhase === "done" ? "pointer" : "default" }}
+            />
+            <motion.div
+              initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 22px)", scale: 0.96 }}
+              animate={{ opacity: 1, x: "-50%", y: "-50%", scale: 1 }}
+              exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 22px)", scale: 0.96 }}
+              transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+              style={{ position: "fixed", left: "50%", top: "50%", zIndex: 71, width: "min(400px, calc(100vw - 32px))", borderRadius: "22px", border: `1px solid ${border}`, background: dark ? "#0f0d1a" : "#ffffff", boxShadow: dark ? "0 32px 100px rgba(0,0,0,0.7)" : "0 28px 80px rgba(15,10,30,0.18)", overflow: "hidden" }}
+            >
+              <AnimatePresence mode="wait">
+                {generationPhase === "loading" ? (
+                  <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
+                    style={{ padding: "36px 28px 32px", textAlign: "center" }}
+                  >
+                    {/* Spinning ring */}
+                    <div style={{ position: "relative", width: 72, height: 72, margin: "0 auto 24px" }}>
+                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
+                        style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "conic-gradient(from 0deg, #a855f7 0%, #ec4899 40%, transparent 70%)" }}
+                      />
+                      <div style={{ position: "absolute", inset: "5px", borderRadius: "50%", background: dark ? "#0f0d1a" : "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <div style={{ width: 26, height: 26, borderRadius: "8px", background: "linear-gradient(135deg,#a855f7,#ec4899)" }} />
+                      </div>
+                    </div>
+                    <p style={{ color: dark ? "#f0ecff" : "#0f0a1e", fontSize: "1.1rem", fontWeight: 650, margin: "0 0 8px", letterSpacing: "-0.02em" }}>{copy.generationTitle}</p>
+                    <p style={{ color: stepLabel, fontSize: "0.82rem", lineHeight: 1.65, margin: "0 0 20px" }}>{copy.generationText}</p>
+                    {/* Bouncing dots */}
+                    <div style={{ display: "flex", gap: "7px", justifyContent: "center" }}>
+                      {[0, 0.18, 0.36].map((delay, i) => (
+                        <motion.div key={i} animate={{ y: [0, -8, 0], opacity: [0.4, 1, 0.4] }}
+                          transition={{ duration: 0.9, repeat: Infinity, delay, ease: "easeInOut" }}
+                          style={{ width: 7, height: 7, borderRadius: "50%", background: "linear-gradient(135deg,#a855f7,#ec4899)" }}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="done" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                    style={{ padding: "36px 28px 28px", textAlign: "center" }}
+                  >
+                    {/* Checkmark */}
+                    <motion.div initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", damping: 14, stiffness: 260 }}
+                      style={{ width: 60, height: 60, margin: "0 auto 18px", borderRadius: "50%", background: "linear-gradient(135deg,#a855f7,#ec4899)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 12px 36px rgba(168,85,247,0.42)" }}
+                    >
+                      <Check size={26} color="#fff" strokeWidth={2.5} />
+                    </motion.div>
+                    <p style={{ color: dark ? "#f0ecff" : "#0f0a1e", fontSize: "1.15rem", fontWeight: 650, margin: "0 0 8px", letterSpacing: "-0.025em" }}>{genC.done}</p>
+                    <p style={{ color: stepLabel, fontSize: "0.82rem", lineHeight: 1.65, margin: "0 0 22px" }}>{genC.doneText}</p>
+                    {/* Sign up CTA */}
+                    <button onClick={() => { setGenerationOpen(false); if (onSignUp) onSignUp(); else onBack(); }}
+                      style={{ width: "100%", padding: "13px 16px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.95rem", fontWeight: 650, marginBottom: "10px", boxShadow: "0 6px 22px rgba(168,85,247,0.36)", letterSpacing: "-0.01em" }}
+                    >{genC.signUp}</button>
+                    {/* Download button */}
+                    <button onClick={() => setGenerationOpen(false)}
+                      style={{ width: "100%", padding: "11px 8px", borderRadius: "12px", border: `1px solid ${border}`, background: dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)", color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.84rem", fontWeight: 600, letterSpacing: "-0.01em", transition: "all 0.15s" }}
+                      onMouseEnter={e => { e.currentTarget.style.background = dark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.1)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)"; }}
+                    >{genC.download}</button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
