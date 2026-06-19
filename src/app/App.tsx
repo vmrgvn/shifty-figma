@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
+import { AuthPage } from "./components/AuthPage";
 import { Wizard } from "./components/Wizard";
 import { LanguageCode, NavMenu, ThemeMode } from "./components/NavMenu";
 
@@ -131,6 +132,7 @@ export default function App() {
     window.matchMedia("(prefers-color-scheme: dark)").matches
   );
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -154,6 +156,10 @@ export default function App() {
     localStorage.setItem("shifty-language", language);
     document.documentElement.lang = language;
   }, [language]);
+
+  if (authOpen) {
+    return <AuthPage dark={dark} language={language} onBack={() => setAuthOpen(false)} />;
+  }
 
   return (
     <div
@@ -217,6 +223,7 @@ export default function App() {
           language={language}
           onThemeChange={setThemeMode}
           onLanguageChange={setLanguage}
+          onLoginClick={() => setAuthOpen(true)}
         />
       </nav>
 
@@ -327,8 +334,7 @@ export default function App() {
         </motion.div>
       </main>
 
-      <Wizard open={wizardOpen} onClose={() => setWizardOpen(false)} dark={dark} />
-
+      <Wizard open={wizardOpen} onClose={() => setWizardOpen(false)} dark={dark} language={language} />
       {/* Footer */}
       <div
         className="relative text-center py-4"

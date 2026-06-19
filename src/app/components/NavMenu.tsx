@@ -23,6 +23,7 @@ interface NavMenuProps {
   language: LanguageCode;
   onThemeChange: (theme: ThemeMode) => void;
   onLanguageChange: (language: LanguageCode) => void;
+  onLoginClick: () => void;
 }
 
 const LANGS: { code: LanguageCode; label: string; native: string; flag: string }[] = [
@@ -51,6 +52,7 @@ export function NavMenu({
   language,
   onThemeChange,
   onLanguageChange,
+  onLoginClick,
 }: NavMenuProps) {
   const [open, setOpen] = useState(false);
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -163,6 +165,11 @@ export function NavMenu({
           >
             <button
               type="button"
+              onClick={() => {
+                setOpen(false);
+                setLanguageOpen(false);
+                onLoginClick();
+              }}
               onMouseEnter={() => setHovered("login")}
               onMouseLeave={() => setHovered(null)}
               style={{

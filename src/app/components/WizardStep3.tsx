@@ -19,6 +19,14 @@ export function defaultStep3(): Step3Data {
   return { mode: "daily", weekDays: [0,1,2,3,4], cycle: [], configs: [{ id: 1, activeDays: [], shifts: [] }] };
 }
 
+function invalidTimeRange(from?: string, to?: string) {
+  return !!from && !!to && to <= from;
+}
+
+export function hasInvalidShiftTimes(data: Step3Data) {
+  return data.configs.some(config => config.shifts.some(shift => invalidTimeRange(shift.from, shift.to)));
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 const WEEK = ["Пн","Вт","Ср","Чт","Пт","Сб","Вс"];
 
@@ -302,19 +310,36 @@ function ShiftRow({ shift, roles, onUpdate, onDelete, dark }: {
 }) {
   const tc = colors(dark);
   const hasRoles = roles.length > 0;
+  const invalid = invalidTimeRange(shift.from, shift.to);
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-      <TimeInput value={shift.from} onChange={v => onUpdate({ from: v })} dark={dark} />
-      <span style={{ color: tc.faint, fontSize: "0.8rem", flexShrink: 0 }}>→</span>
-      <TimeInput value={shift.to} onChange={v => onUpdate({ to: v })} dark={dark} />
-      {hasRoles && <RoleDropdown value={shift.role} onChange={v => onUpdate({ role: v })} roles={roles} dark={dark} />}
-      <button onClick={onDelete} style={{
-        background: "none", border: "none", cursor: "pointer", padding: "4px",
-        color: tc.iconMuted, display: "flex", flexShrink: 0, borderRadius: "6px", transition: "color 0.15s",
-      }}
-        onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
-        onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
-      ><Trash2 size={13} strokeWidth={1.8} /></button>
+    <div style={{ marginBottom: "8px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+        <TimeInput value={shift.from} onChange={v => onUpdate({ from: v })} dark={dark} />
+        <span style={{ color: invalid ? "#f87171" : tc.faint, fontSize: "0.8rem", flexShrink: 0 }}>→</span>
+        <TimeInput value={shift.to} onChange={v => onUpdate({ to: v })} dark={dark} />
+        {hasRoles && <RoleDropdown value={shift.role} onChange={v => onUpdate({ role: v })} roles={roles} dark={dark} />}
+        <button onClick={onDelete} style={{
+          background: "none", border: "none", cursor: "pointer", padding: "4px",
+          color: tc.iconMuted, display: "flex", flexShrink: 0, borderRadius: "6px", transition: "color 0.15s",
+        }}
+          onMouseEnter={e => (e.currentTarget.style.color = "#f87171")}
+          onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
+        ><Trash2 size={13} strokeWidth={1.8} /></button>
+      </div>
+      {invalid && (
+        <div style={{
+          marginTop: "5px",
+          padding: "7px 9px",
+          borderRadius: "8px",
+          background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)",
+          border: "1px solid rgba(248,113,113,0.22)",
+          color: "#f87171",
+          fontSize: "0.72rem",
+          lineHeight: 1.35,
+        }}>
+          Время окончания должно быть позже начала
+        </div>
+      )}
     </div>
   );
 }
@@ -475,7 +500,7 @@ export function StepFour({ data, onChange, globalRoles, onGoToStep, dark }: {
         <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", padding: "10px 12px", borderRadius: "10px", background: tc.chipBg, border: `1px solid ${tc.rowBorder}`, marginBottom: "14px" }}>
           <AlertCircle size={14} strokeWidth={1.8} style={{ color: tc.iconMuted, flexShrink: 0, marginTop: "1px" }} />
           <span style={{ color: tc.sub, fontSize: "0.78rem", lineHeight: 1.6 }}>
-            Вы можете назначать разные роли для смен. Для этого добавьте роли сотрудникам на{" "}
+            Вы можете назначать разные роли для смен. Для этого добавьте роли на{" "}
             <a onClick={() => onGoToStep(2)} style={{ color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", textDecoration: "none", fontWeight: 500 }}
               onMouseEnter={e => ((e.target as HTMLElement).style.textDecoration = "underline")}
               onMouseLeave={e => ((e.target as HTMLElement).style.textDecoration = "none")}

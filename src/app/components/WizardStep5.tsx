@@ -16,6 +16,14 @@ export function defaultStep5(): Step5Data {
   return { breaks: [], daysOff: [], minRestHours: 8, periodic: true };
 }
 
+function invalidTimeRange(from?: string, to?: string) {
+  return !!from && !!to && to <= from;
+}
+
+export function hasInvalidBreakTimes(data: Step5Data) {
+  return data.breaks.some(item => invalidTimeRange(item.from, item.to));
+}
+
 // ─── Colors ───────────────────────────────────────────────────────────────────
 function colors(dark: boolean) {
   return {
@@ -136,8 +144,32 @@ function Toggle({ value, onChange, dark }: { value: boolean; onChange: (v: boole
 }
 
 // ─── Step 5 ───────────────────────────────────────────────────────────────────
-export function StepFive({ data, onChange, dark }: {
-  data: Step5Data; onChange: (d: Step5Data) => void; dark: boolean;
+export function StepFive({ data, onChange, scheduleName, onScheduleNameChange, scheduleCopy, dark }: {
+  data: Step5Data; onChange: (d: Step5Data) => void;
+  scheduleName: string; onScheduleNameChange: (v: string) => void;
+  scheduleCopy?: {
+    title: string;
+    desc: string;
+    placeholder: string;
+    pageTitle: string;
+    breaksTitle: string;
+    breaksDesc: string;
+    addBreak: string;
+    daysOffTitle: string;
+    daysOffDesc: string;
+    addDay: string;
+    restTitle: string;
+    restDesc: string;
+    hours: string;
+    periodicTitle: string;
+    periodicDesc: string;
+    periodicOn: string;
+    periodicOff: string;
+    add: string;
+    cancel: string;
+    timeError: string;
+  };
+  dark: boolean;
 }) {
   const [addingBreak, setAddingBreak]   = useState(false);
   const [breakFrom, setBreakFrom]       = useState("");
@@ -146,12 +178,36 @@ export function StepFive({ data, onChange, dark }: {
   const [dayOffDate, setDayOffDate]     = useState("");
   const nextId = useRef(500);
   const tc = colors(dark);
+  const labels = scheduleCopy ?? {
+    title: "Название расписания",
+    desc: "Внутреннее название, чтобы потом проще найти это расписание.",
+    placeholder: "Например, магазин на ул. Юности",
+    pageTitle: "Общие настройки",
+    breaksTitle: "Перерывы",
+    breaksDesc: "Фиксированные промежутки, когда сотрудники не работают: обед, пересменка и другие паузы.",
+    addBreak: "Добавить перерыв",
+    daysOffTitle: "Нерабочие дни",
+    daysOffDesc: "Праздники и другие дни, когда бизнес не работает. Смены на эти даты назначаться не будут.",
+    addDay: "Добавить день",
+    restTitle: "Минимальный отдых между сменами",
+    restDesc: "Сколько часов сотрудник должен отдыхать между двумя сменами подряд.",
+    hours: "часов",
+    periodicTitle: "Периодичность смен",
+    periodicDesc: "Ставить сотруднику смены в одно и то же время или распределять их случайно.",
+    periodicOn: "Постоянное время смен",
+    periodicOff: "Случайное распределение",
+    add: "Добавить",
+    cancel: "Отмена",
+    timeError: "Время окончания должно быть позже начала",
+  };
 
   const [focusedDate, setFocusedDate] = useState(false);
   const [focusedRest, setFocusedRest] = useState(false);
+  const [focusedName, setFocusedName] = useState(false);
+  const breakInvalid = invalidTimeRange(breakFrom, breakTo);
 
   const addBreak = () => {
-    if (!breakFrom || !breakTo) return;
+    if (!breakFrom || !breakTo || breakInvalid) return;
     onChange({ ...data, breaks: [...data.breaks, { id: nextId.current++, from: breakFrom, to: breakTo }] });
     setBreakFrom(""); setBreakTo(""); setAddingBreak(false);
   };
@@ -170,15 +226,30 @@ export function StepFive({ data, onChange, dark }: {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
       <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1.15rem", margin: "0 0 16px", letterSpacing: "-0.03em" }}>
-        Общие настройки
+        {labels.pageTitle}
       </p>
 
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0, paddingRight: "2px" }}>
+        <Section dark={dark}>
+          <SectionTitle icon={Clock} title={labels.title} dark={dark}
+            desc={labels.desc} />
+          <input type="text" value={scheduleName} onChange={e => onScheduleNameChange(e.target.value)}
+            onFocus={() => setFocusedName(true)} onBlur={() => setFocusedName(false)}
+            placeholder={labels.placeholder}
+            style={{
+              width: "100%", background: tc.inputBg,
+              border: `1.5px solid ${focusedName ? "#a855f7" : tc.inputBorder}`,
+              borderRadius: "10px", padding: "11px 14px", color: tc.headline,
+              fontSize: "0.9rem", fontFamily: "'DM Sans',sans-serif",
+              outline: "none", transition: "border-color 0.18s", boxSizing: "border-box",
+            }}
+          />
+        </Section>
 
         {/* Breaks */}
         <Section dark={dark}>
-          <SectionTitle icon={Timer} title="Перерывы" dark={dark}
-            desc="Фиксированные промежутки, когда сотрудники не работают — обед, пересменка и т.д. Будут учтены при составлении расписания." />
+          <SectionTitle icon={Timer} title={labels.breaksTitle} dark={dark}
+            desc={labels.breaksDesc} />
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: data.breaks.length > 0 ? "10px" : "0" }}>
             {data.breaks.map(b => (
@@ -188,31 +259,47 @@ export function StepFive({ data, onChange, dark }: {
           </div>
 
           {addingBreak ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <TimeInput value={breakFrom} onChange={setBreakFrom} dark={dark} />
-              <span style={{ color: tc.faint, fontSize: "0.8rem" }}>→</span>
-              <TimeInput value={breakTo}   onChange={setBreakTo}   dark={dark} />
-              <button onClick={addBreak} style={{
-                padding: "7px 14px", borderRadius: "8px", border: "none", cursor: "pointer",
-                background: breakFrom && breakTo ? "linear-gradient(135deg,#a855f7,#ec4899)" : tc.chipBg,
-                color: breakFrom && breakTo ? "#fff" : tc.iconMuted,
-                fontSize: "0.8rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif",
-                transition: "all 0.15s",
-              }}>Добавить</button>
-              <button onClick={() => { setAddingBreak(false); setBreakFrom(""); setBreakTo(""); }} style={{
-                background: "none", border: "none", cursor: "pointer",
-                color: tc.iconMuted, fontSize: "0.8rem", fontFamily: "'DM Sans',sans-serif",
-              }}>Отмена</button>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <TimeInput value={breakFrom} onChange={setBreakFrom} dark={dark} />
+                <span style={{ color: breakInvalid ? "#f87171" : tc.faint, fontSize: "0.8rem" }}>→</span>
+                <TimeInput value={breakTo}   onChange={setBreakTo}   dark={dark} />
+                <button onClick={addBreak} style={{
+                  padding: "7px 14px", borderRadius: "8px", border: "none", cursor: breakFrom && breakTo && !breakInvalid ? "pointer" : "default",
+                  background: breakFrom && breakTo && !breakInvalid ? "linear-gradient(135deg,#a855f7,#ec4899)" : tc.chipBg,
+                  color: breakFrom && breakTo && !breakInvalid ? "#fff" : tc.iconMuted,
+                  fontSize: "0.8rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif",
+                  transition: "all 0.15s",
+                }}>{labels.add}</button>
+                <button onClick={() => { setAddingBreak(false); setBreakFrom(""); setBreakTo(""); }} style={{
+                  background: "none", border: "none", cursor: "pointer",
+                  color: tc.iconMuted, fontSize: "0.8rem", fontFamily: "'DM Sans',sans-serif",
+                }}>{labels.cancel}</button>
+              </div>
+              {breakInvalid && (
+                <div style={{
+                  marginTop: "8px",
+                  padding: "7px 9px",
+                  borderRadius: "8px",
+                  background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)",
+                  border: "1px solid rgba(248,113,113,0.22)",
+                  color: "#f87171",
+                  fontSize: "0.72rem",
+                  lineHeight: 1.35,
+                }}>
+                  {labels.timeError}
+                </div>
+              )}
             </div>
           ) : (
-            <AddRowBtn label="Добавить перерыв" onClick={() => setAddingBreak(true)} dark={dark} />
+            <AddRowBtn label={labels.addBreak} onClick={() => setAddingBreak(true)} dark={dark} />
           )}
         </Section>
 
         {/* Days off */}
         <Section dark={dark}>
-          <SectionTitle icon={CalendarX} title="Нерабочие дни" dark={dark}
-            desc="Государственные праздники и другие дни, когда бизнес не работает. Смены на эти даты назначаться не будут." />
+          <SectionTitle icon={CalendarX} title={labels.daysOffTitle} dark={dark}
+            desc={labels.daysOffDesc} />
 
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: data.daysOff.length > 0 ? "10px" : "0" }}>
             {data.daysOff.map(d => (
@@ -237,21 +324,21 @@ export function StepFive({ data, onChange, dark }: {
                 background: dayOffDate ? "linear-gradient(135deg,#a855f7,#ec4899)" : tc.chipBg,
                 color: dayOffDate ? "#fff" : tc.iconMuted,
                 fontSize: "0.8rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", transition: "all 0.15s",
-              }}>Добавить</button>
+              }}>{labels.add}</button>
               <button onClick={() => { setAddingDayOff(false); setDayOffDate(""); }} style={{
                 background: "none", border: "none", cursor: "pointer",
                 color: tc.iconMuted, fontSize: "0.8rem", fontFamily: "'DM Sans',sans-serif",
-              }}>Отмена</button>
+              }}>{labels.cancel}</button>
             </div>
           ) : (
-            <AddRowBtn label="Добавить день" onClick={() => setAddingDayOff(true)} dark={dark} />
+            <AddRowBtn label={labels.addDay} onClick={() => setAddingDayOff(true)} dark={dark} />
           )}
         </Section>
 
         {/* Min rest */}
         <Section dark={dark}>
-          <SectionTitle icon={Clock} title="Минимальный отдых между сменами" dark={dark}
-            desc="Сколько часов сотрудник должен отдыхать между двумя сменами подряд." />
+          <SectionTitle icon={Clock} title={labels.restTitle} dark={dark}
+            desc={labels.restDesc} />
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <input type="text" inputMode="numeric" value={data.minRestHours}
               onChange={e => { const v = parseInt(e.target.value); if (!isNaN(v) && v >= 0) onChange({ ...data, minRestHours: v }); }}
@@ -264,17 +351,17 @@ export function StepFive({ data, onChange, dark }: {
                 outline: "none", textAlign: "center", transition: "border-color 0.18s",
               }}
             />
-            <span style={{ color: tc.sub, fontSize: "0.85rem" }}>часов</span>
+            <span style={{ color: tc.sub, fontSize: "0.85rem" }}>{labels.hours}</span>
           </div>
         </Section>
 
         {/* Periodicity */}
         <Section dark={dark}>
-          <SectionTitle icon={Shuffle} title="Периодичность смен" dark={dark}
-            desc="Стараться ставить каждому сотруднику смены в одно и то же время — или распределять их случайно." />
+          <SectionTitle icon={Shuffle} title={labels.periodicTitle} dark={dark}
+            desc={labels.periodicDesc} />
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
             <span style={{ color: data.periodic ? tc.headline : tc.sub, fontSize: "0.85rem", fontWeight: data.periodic ? 500 : 400, transition: "all 0.2s" }}>
-              {data.periodic ? "Постоянное время смен" : "Случайное распределение"}
+              {data.periodic ? labels.periodicOn : labels.periodicOff}
             </span>
             <Toggle value={data.periodic} onChange={v => onChange({ ...data, periodic: v })} dark={dark} />
           </div>
