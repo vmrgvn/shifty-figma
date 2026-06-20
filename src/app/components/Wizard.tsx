@@ -117,7 +117,6 @@ function invalidTimeRange(from?: string, to?: string) {
 
 function employeeProblems(emp: EmpData, t = wizardCopy.ru.employeeProblems) {
   const problems: string[] = [];
-  if (emp.roles.length === 0) problems.push(t.noRole);
   if (emp.hired && emp.fired && emp.fired < emp.hired) problems.push(t.firedBeforeHired);
   if (emp.absences.some(a => a.dateFrom && a.dateTo && a.dateTo < a.dateFrom)) problems.push(t.absenceDates);
   if (emp.absences.some(a => invalidTimeRange(a.timeFrom, a.timeTo))) problems.push(t.absenceTime);
@@ -126,18 +125,25 @@ function employeeProblems(emp: EmpData, t = wizardCopy.ru.employeeProblems) {
 }
 
 function hasEmployeeValidationErrors(employees: EmpData[]) {
-  return employees.some(emp => {
-    const roleOnly = emp.roles.length === 0 && employeeProblems(emp).length === 1;
-    return employeeProblems(emp).length > 0 && !roleOnly;
-  });
-}
-
-function hasUnassignedEmployees(employees: EmpData[]) {
-  return employees.some(emp => emp.roles.length === 0);
+  return employees.some(emp => employeeProblems(emp).length > 0);
 }
 
 function hasAnyShift(data: Step3Data) {
   return data.configs.some(config => config.shifts.length > 0);
+}
+
+function hasRoleConflicts(employees: EmpData[], configs: Step3Data["configs"]): Array<{ from: string; to: string; role: string }> {
+  const conflicts: Array<{ from: string; to: string; role: string }> = [];
+  for (const config of configs) {
+    for (const shift of config.shifts) {
+      if (shift.role && !employees.some(e => e.roles.includes(shift.role))) {
+        if (!conflicts.some(c => c.role === shift.role && c.from === shift.from && c.to === shift.to)) {
+          conflicts.push({ from: shift.from, to: shift.to, role: shift.role });
+        }
+      }
+    }
+  }
+  return conflicts;
 }
 
 function cloneEmployee(emp: EmpData): EmpData {
@@ -1565,18 +1571,21 @@ function Label({ text, dark }: { text: string; dark: boolean }) {
   return <p style={{ color: colors(dark).sub, fontSize: "0.75rem", margin: "0 0 4px", fontWeight: 500, letterSpacing: "0.02em" }}>{text}</p>;
 }
 
-function SaveBtn({ label, onClick }: { label: string; onClick: () => void }) {
+function SaveBtn({ label, onClick, pulsing }: { label: string; onClick: () => void; pulsing?: boolean }) {
   return (
-    <button onClick={onClick} style={{
-      padding: "10px 20px", borderRadius: "10px", border: "none", cursor: "pointer",
-      background: "linear-gradient(135deg,#a855f7,#ec4899)",
-      color: "#fff", fontSize: "0.875rem", fontWeight: 500,
-      fontFamily: "'DM Sans',sans-serif", alignSelf: "flex-end",
-      boxShadow: "0 3px 12px rgba(168,85,247,0.3)", transition: "all 0.15s",
-    }}
-      onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.07)"; }}
-      onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; }}
-    >{label}</button>
+    <motion.button onClick={onClick}
+      animate={pulsing ? { boxShadow: ["0 3px 12px rgba(168,85,247,0.3)", "0 3px 22px rgba(168,85,247,0.75)", "0 3px 12px rgba(168,85,247,0.3)"] } : { boxShadow: "0 3px 12px rgba(168,85,247,0.3)" }}
+      transition={pulsing ? { duration: 1.1, repeat: Infinity, ease: "easeInOut" } : { duration: 0 }}
+      style={{
+        padding: "10px 20px", borderRadius: "10px", border: "none", cursor: "pointer",
+        background: "linear-gradient(135deg,#a855f7,#ec4899)",
+        color: "#fff", fontSize: "0.875rem", fontWeight: 500,
+        fontFamily: "'DM Sans',sans-serif", alignSelf: "flex-end",
+        transition: "filter 0.15s",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.filter = "brightness(1.07)"; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = "brightness(1)"; }}
+    >{label}</motion.button>
   );
 }
 
@@ -1800,7 +1809,7 @@ function AbsencesPanel({ emp, onUpdate, dark, label, pc }: {
 
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                 <button onClick={reset} style={{ padding: "9px 16px", borderRadius: "10px", border: `1px solid ${tc.inputBorder}`, background: "none", color: tc.sub, fontSize: "0.85rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>{pcp.cancel}</button>
-                <SaveBtn label={pcp.add} onClick={handleAdd} />
+                <SaveBtn label={pcp.add} onClick={handleAdd} pulsing={canAdd && !timeInvalid && !dateInvalid} />
               </div>
             </FormBox>
           )}
@@ -1946,7 +1955,7 @@ function TimePrefsPanel({ emp, onUpdate, dark, label, pc }: {
               {missingMessage && <p style={{ color: "#f87171", fontSize: "0.72rem", margin: "-4px 0 0", lineHeight: 1.4 }}>{missingMessage}</p>}
               <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end" }}>
                 <button onClick={reset} style={{ padding: "9px 16px", borderRadius: "10px", border: `1px solid ${colors(dark).inputBorder}`, background: "none", color: colors(dark).sub, fontSize: "0.85rem", cursor: "pointer", fontFamily: "'DM Sans',sans-serif" }}>{pcp.cancel}</button>
-                <SaveBtn label={pcp.add} onClick={handleAdd} />
+                <SaveBtn label={pcp.add} onClick={handleAdd} pulsing={canAdd} />
               </div>
             </FormBox>
           )}
@@ -2117,6 +2126,40 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
   const [mobileRolesOpen, setMobileRolesOpen] = useState(false);
   const empRef = useRef<HTMLInputElement>(null);
   const tc = colors(dark);
+  const sheetWrapRef = useRef<HTMLDivElement>(null);
+  const swipeTouchStartY = useRef<number | null>(null);
+  const swipeCurrentY = useRef(0);
+
+  const handleSheetTouchStart = (e: React.TouchEvent) => {
+    swipeTouchStartY.current = e.touches[0].clientY;
+    swipeCurrentY.current = 0;
+  };
+  const handleSheetTouchMove = (e: React.TouchEvent) => {
+    if (swipeTouchStartY.current === null || !sheetWrapRef.current) return;
+    const dy = e.touches[0].clientY - swipeTouchStartY.current;
+    if (dy > 0) {
+      e.preventDefault();
+      swipeCurrentY.current = dy;
+      sheetWrapRef.current.style.transform = `translateY(${dy}px)`;
+      sheetWrapRef.current.style.transition = "none";
+    }
+  };
+  const handleSheetTouchEnd = () => {
+    if (!sheetWrapRef.current) return;
+    const dy = swipeCurrentY.current;
+    swipeTouchStartY.current = null;
+    swipeCurrentY.current = 0;
+    if (dy > 80) {
+      const el = sheetWrapRef.current;
+      el.style.transition = "transform 0.24s cubic-bezier(0.4,0,1,1)";
+      el.style.transform = "translateY(100dvh)";
+      const onEnd = () => { el.removeEventListener("transitionend", onEnd); saveAndClose(); };
+      el.addEventListener("transitionend", onEnd);
+    } else {
+      sheetWrapRef.current.style.transition = "transform 0.3s cubic-bezier(0.16,1,0.3,1)";
+      sheetWrapRef.current.style.transform = "translateY(0)";
+    }
+  };
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 639px)");
@@ -2144,6 +2187,28 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
     if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp);
     setDraftEmp(null); setSelected(null); setMobileRolesOpen(false);
   };
+  const selectEmployee = (empId: number) => {
+    if (draftEmp && draftEmp.id !== empId) onUpdateEmp(draftEmp.id, draftEmp);
+    if (!draftEmp || draftEmp.id !== empId) {
+      const emp = employees.find(e => e.id === empId);
+      if (emp) setDraftEmp(cloneEmployee(emp));
+    }
+    setSelected(prev => ({ empId, feature: prev?.empId === empId ? (prev.feature ?? "roles") : "roles" }));
+  };
+  const switchTab = (feature: string) => {
+    setSelected(prev => prev ? { ...prev, feature } : null);
+  };
+
+  // Keep latest draftEmp in ref so cleanup can commit it on unmount
+  const draftEmpRef = useRef<EmpData | null>(null);
+  draftEmpRef.current = draftEmp;
+  useEffect(() => {
+    return () => {
+      const d = draftEmpRef.current;
+      if (d) onUpdateEmp(d.id, d);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const updateDraft = (patch: Partial<EmpData>) => setDraftEmp(prev => prev ? { ...prev, ...patch } : prev);
   const toggleDraftRole = (empId: number, role: string) => {
     setDraftEmp(prev => {
@@ -2153,6 +2218,14 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
   };
 
   const activeEmp = draftEmp ?? (selected ? employees.find(e => e.id === selected.empId) : null);
+
+  // Auto-select first employee on desktop when none is selected
+  useEffect(() => {
+    if (!isMobile && !selected && employees.length > 0) {
+      selectEmployee(employees[0].id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, employees.length]);
 
   const renderFeaturePanel = () => {
     if (!selected || !activeEmp) return null;
@@ -2298,25 +2371,33 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
                 onClick={saveAndClose}
                 style={{ position: "fixed", inset: 0, zIndex: 99, background: "rgba(0,0,0,0.48)", backdropFilter: "blur(2px)" }}
               />
-              <motion.div key="sheet"
-                initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
-                transition={{ type: "spring", damping: 32, stiffness: 320 }}
-                style={{
-                  position: "fixed", bottom: 0, left: 0, right: 0,
-                  height: "78dvh", borderRadius: "20px 20px 0 0",
-                  background: dark ? "#14121e" : "#ffffff",
-                  borderTop: `1px solid ${tc.rowBorder}`,
-                  zIndex: 100, display: "flex", flexDirection: "column", overflow: "hidden",
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 20px 4px", flexShrink: 0 }}>
-                  <div style={{ width: "36px", height: "4px", borderRadius: "2px", background: tc.faint, marginBottom: "12px" }} />
-                  <p style={{ margin: 0, color: tc.headline, fontWeight: 600, fontSize: "0.9rem", letterSpacing: "-0.01em", alignSelf: "flex-start" }}>{sheetTitle}</p>
-                </div>
-                <div style={{ flex: 1, minHeight: 0, padding: "12px 20px 24px", display: "flex", flexDirection: "column" }}>
-                  {selected ? renderFeaturePanel() : renderRolesPanel()}
-                </div>
-              </motion.div>
+              <div ref={sheetWrapRef} style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 100 }}>
+                <motion.div key="sheet"
+                  initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+                  transition={{ type: "spring", damping: 32, stiffness: 320 }}
+                  style={{
+                    height: "78dvh", borderRadius: "20px 20px 0 0",
+                    background: dark ? "#14121e" : "#ffffff",
+                    borderTop: `1px solid ${tc.rowBorder}`,
+                    display: "flex", flexDirection: "column", overflow: "hidden",
+                  }}
+                >
+                  {/* Drag handle — touch events only here, touchAction: none prevents pull-to-refresh */}
+                  <div
+                    onTouchStart={handleSheetTouchStart}
+                    onTouchMove={handleSheetTouchMove}
+                    onTouchEnd={handleSheetTouchEnd}
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 20px 4px", flexShrink: 0, touchAction: "none", userSelect: "none" }}
+                  >
+                    <div style={{ width: "36px", height: "4px", borderRadius: "2px", background: tc.faint, marginBottom: "12px" }} />
+                    <p style={{ margin: 0, color: tc.headline, fontWeight: 600, fontSize: "0.9rem", letterSpacing: "-0.01em", alignSelf: "flex-start" }}>{sheetTitle}</p>
+                  </div>
+                  {/* Content — overscrollBehavior contains native scroll, no pull-to-refresh */}
+                  <div style={{ flex: 1, minHeight: 0, padding: "12px 20px 24px", display: "flex", flexDirection: "column", overscrollBehavior: "contain" }}>
+                    {selected ? renderFeaturePanel() : renderRolesPanel()}
+                  </div>
+                </motion.div>
+              </div>
             </>
           )}
         </AnimatePresence>
@@ -2324,29 +2405,106 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
     );
   }
 
+  const DESKTOP_TABS = [
+    { key: "roles",       label: "Роль" },
+    { key: "dates",       label: "Расписание" },
+    { key: "timePrefs",   label: "Пожелания" },
+    { key: "absences",    label: "Отпуск" },
+    { key: "socialPrefs", label: "Отгулы" },
+  ];
+
   return (
     <div style={{ display: "flex", gap: "20px", height: "100%", minHeight: 0 }}>
-      {/* Left: employees */}
-      <div style={{ flex: "0 0 min(52%, 340px)", minWidth: 0, display: "flex", flexDirection: "column", gap: "10px", minHeight: 0 }}>
+      {/* Left: employee list */}
+      <div style={{ flex: "0 0 min(260px, 38%)", minWidth: 0, display: "flex", flexDirection: "column", gap: "10px", minHeight: 0 }}>
         <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1rem", margin: 0, letterSpacing: "-0.02em" }}>{stepCopy.employeesTitle}</p>
         {empInputSection}
-        {empListSection}
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+          <AnimatePresence>
+            {employees.length === 0 ? (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ textAlign: "center", padding: "24px 0" }}>
+                <UserRound size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 8px" }} />
+                <p style={{ color: tc.sub, fontSize: "0.82rem", margin: "0 0 2px", fontWeight: 500 }}>{stepCopy.employeesEmpty}</p>
+                <p style={{ color: tc.faint, fontSize: "0.74rem", margin: 0 }}>{stepCopy.employeesHint}</p>
+              </motion.div>
+            ) : employees.map(emp => {
+              const isSelected = selected?.empId === emp.id;
+              const displayEmp = draftEmp?.id === emp.id ? draftEmp : emp;
+              return (
+                <motion.div key={emp.id}
+                  initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.18 }}
+                  onClick={() => selectEmployee(emp.id)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: "10px",
+                    padding: "10px", borderRadius: "10px",
+                    border: `1px solid ${isSelected ? (dark ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.35)") : tc.rowBorder}`,
+                    marginBottom: "6px", cursor: "pointer",
+                    background: isSelected ? (dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.06)") : "transparent",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  <Avatar name={displayEmp.name} size={30} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ color: tc.headline, fontSize: "0.88rem", fontWeight: 500, display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayEmp.name}</span>
+                    {displayEmp.roles.length > 0 && (
+                      <span style={{ color: tc.sub, fontSize: "0.72rem", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayEmp.roles.join(", ")}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); if (selected?.empId === emp.id) { setSelected(null); setDraftEmp(null); } onDeleteEmployee(emp.id); }}
+                    style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", color: tc.iconMuted, transition: "color 0.15s", flexShrink: 0 }}
+                    onMouseEnter={e => (e.currentTarget.style.color = "#f87171")} onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
+                  ><Trash2 size={13} strokeWidth={1.8} /></button>
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </div>
       </div>
 
       {/* Divider */}
       <div style={{ width: "1px", background: tc.rowBorder, flexShrink: 0, alignSelf: "stretch" }} />
 
-      {/* Right: roles or feature panel */}
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
-        <AnimatePresence mode="wait">
-          <motion.div key={selected ? `${selected.empId}-${selected.feature}` : "roles"}
-            initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.16 }}
-            style={{ height: "100%", display: "flex", flexDirection: "column" }}
-          >
-            {renderRightPanel()}
-          </motion.div>
-        </AnimatePresence>
+      {/* Right: tabs + content */}
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        {!selected || !activeEmp ? (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: "10px" }}>
+            <UserRound size={36} strokeWidth={1.2} style={{ color: tc.faint }} />
+            <p style={{ color: tc.sub, fontSize: "0.85rem", margin: 0 }}>Выберите сотрудника слева</p>
+          </div>
+        ) : (
+          <>
+            {/* Tab bar */}
+            <div style={{ display: "flex", gap: "5px", marginBottom: "14px", flexShrink: 0, flexWrap: "wrap" }}>
+              {DESKTOP_TABS.map(tab => {
+                const isActive = selected.feature === tab.key;
+                return (
+                  <button key={tab.key} onClick={() => switchTab(tab.key)} style={{
+                    padding: "6px 14px", borderRadius: "99px",
+                    border: `1px solid ${isActive ? "transparent" : tc.inputBorder}`,
+                    background: isActive ? "linear-gradient(135deg,#a855f7,#ec4899)" : tc.chipBg,
+                    color: isActive ? "#fff" : tc.sub,
+                    fontSize: "0.8rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif",
+                    cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
+                    boxShadow: isActive ? "0 2px 10px rgba(168,85,247,0.3)" : "none",
+                  }}>{tab.label}</button>
+                );
+              })}
+            </div>
+            {/* Panel content */}
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+              <AnimatePresence mode="wait">
+                <motion.div key={selected.feature} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.14 }} style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+                  {selected.feature === "roles"       && <RolesPanel emp={activeEmp} globalRoles={globalRoles} onToggleRole={toggleDraftRole} onAddRole={onAddRole} dark={dark} label={actionLabels.roles} pCopy={panelsCopy} />}
+                  {selected.feature === "absences"    && <AbsencesPanel emp={activeEmp} onUpdate={a => updateDraft({ absences: a })} dark={dark} label={actionLabels.absences} pc={panelCopy2} />}
+                  {selected.feature === "dates"       && <HireDatesPanel emp={activeEmp} onUpdate={(h, f) => updateDraft({ hired: h, fired: f })} dark={dark} label={actionLabels.dates} pc={panelCopy2} />}
+                  {selected.feature === "timePrefs"   && <TimePrefsPanel emp={activeEmp} onUpdate={p => updateDraft({ timePrefs: p })} dark={dark} label={actionLabels.timePrefs} pc={panelCopy2} />}
+                  {selected.feature === "socialPrefs" && <SocialPrefsPanel emp={activeEmp} allEmployees={employees} onUpdate={p => updateDraft({ socialPrefs: p })} dark={dark} label={actionLabels.socialPrefs} pc={panelCopy2} />}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -2794,6 +2952,7 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
   const [step5Data, setStep5Data] = useState<Step5Data>(() => (readDraft().step5Data as Step5Data) ?? defaultStep5());
   const [generationOpen, setGenerationOpen] = useState(false);
   const [generationPhase, setGenerationPhase] = useState<"loading" | "done">("loading");
+  const [logOpen, setLogOpen] = useState(false);
   const [continueAttempted, setContinueAttempted] = useState(false);
 
   const copy = wizardCopy[language] ?? wizardCopy.ru;
@@ -2849,13 +3008,13 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
 
   const validationMessage =
     step === 1 && employees.length === 0 ? copy.validation.employees
-    : step === 1 && globalRoles.length === 0 ? copy.validation.roles
-    : step === 1 && hasUnassignedEmployees(employees) ? copy.validation.employeeRoles
     : step === 3 && !hasAnyShift(step3Data) ? copy.validation.shifts
     : step === 3 && hasInvalidShiftTimes(step3Data) ? copy.validation.shiftTime
     : step === 4 && hasInvalidBreakTimes(step5Data) ? copy.validation.breakTime
     : "";
   const showValidationMessage = continueAttempted && !!validationMessage;
+  const roleConflicts = step === TOTAL_STEPS ? hasRoleConflicts(employees, step3Data.configs) : [];
+  const showRoleConflicts = continueAttempted && !validationMessage && roleConflicts.length > 0;
 
   const rightBtnLabel = step === TOTAL_STEPS ? copy.generate : copy.continue;
 
@@ -2916,6 +3075,26 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
             <span>{validationMessage}</span>
           </div>
         )}
+        {showRoleConflicts && roleConflicts.map((c, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "8px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)" }}>
+            <AlertCircle size={14} strokeWidth={1.9} style={{ color: "#f87171", flex: "0 0 auto", marginTop: "2px" }} />
+            <div style={{ flex: 1 }}>
+              <p style={{ color: "#f87171", fontSize: "0.78rem", margin: "0 0 6px", lineHeight: 1.45 }}>
+                Смена {c.from}–{c.to} требует роль «{c.role}», но ни один сотрудник не имеет этой роли. Назначьте роль сотруднику или уберите ограничение со смены.
+              </p>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                <button onClick={() => { setContinueAttempted(false); setStep(1); }}
+                  style={{ padding: "4px 10px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.73rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}>
+                  Перейти к сотрудникам
+                </button>
+                <button onClick={() => { setContinueAttempted(false); setStep(3); }}
+                  style={{ padding: "4px 10px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.73rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}>
+                  Перейти к сменам
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <a onClick={() => step > 1 ? setStep(s => s - 1) : onBack()}
             style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s", visibility: step > 1 ? "visible" : "hidden" }}
@@ -2927,7 +3106,11 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
           <button
             onClick={() => {
               if (validationMessage) { setContinueAttempted(true); return; }
-              if (step === TOTAL_STEPS) { setGenerationPhase("loading"); setGenerationOpen(true); return; }
+              if (step === TOTAL_STEPS) {
+                const conflicts = hasRoleConflicts(employees, step3Data.configs);
+                if (conflicts.length > 0) { setContinueAttempted(true); return; }
+                setGenerationPhase("loading"); setGenerationOpen(true); return;
+              }
               setStep(s => s + 1);
             }}
             style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "13px 22px", borderRadius: "10px", background: "linear-gradient(135deg,#a855f7 0%,#ec4899 100%)", color: "#fff", fontSize: "0.95rem", fontWeight: 500, border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", boxShadow: "0 4px 20px rgba(168,85,247,0.3)", transition: "all 0.18s ease", whiteSpace: "nowrap" }}
@@ -2995,8 +3178,8 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
                     <button onClick={() => { setGenerationOpen(false); if (onSignUp) onSignUp(); else onBack(); }}
                       style={{ width: "100%", padding: "13px 16px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.95rem", fontWeight: 650, marginBottom: "10px", boxShadow: "0 6px 22px rgba(168,85,247,0.36)", letterSpacing: "-0.01em" }}
                     >{genC.signUp}</button>
-                    {/* Download button */}
-                    <button onClick={() => setGenerationOpen(false)}
+                    {/* Download button — opens log modal */}
+                    <button onClick={() => setLogOpen(true)}
                       style={{ width: "100%", padding: "11px 8px", borderRadius: "12px", border: `1px solid ${border}`, background: dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)", color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.84rem", fontWeight: 600, letterSpacing: "-0.01em", transition: "all 0.15s" }}
                       onMouseEnter={e => { e.currentTarget.style.background = dark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.1)"; }}
                       onMouseLeave={e => { e.currentTarget.style.background = dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)"; }}
@@ -3007,6 +3190,85 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
             </motion.div>
           </>
         )}
+      </AnimatePresence>
+
+      {/* Log modal — opened from "Скачать Excel" on done screen */}
+      <AnimatePresence>
+        {logOpen && (() => {
+          const allShifts = step3Data.configs.flatMap(c => c.shifts);
+          const conflicts = hasRoleConflicts(employees, step3Data.configs);
+          const logLines: string[] = [];
+          employees.forEach(emp => {
+            logLines.push(`Добавлен сотрудник «${emp.name}».`);
+            emp.roles.forEach(r => logLines.push(`Сотруднику «${emp.name}» назначена роль «${r}».`));
+          });
+          allShifts.forEach(shift => {
+            logLines.push(`Добавлена смена (${shift.from}–${shift.to}).`);
+            if (shift.role) logLines.push(`Для смены (${shift.from}–${shift.to}) указана роль «${shift.role}».`);
+            else logLines.push(`Для смены (${shift.from}–${shift.to}) ограничение по роли не задано.`);
+          });
+          const empN = employees.length;
+          const empWord = empN === 1 ? "сотрудник" : empN < 5 ? "сотрудника" : "сотрудников";
+          const shiftN = allShifts.length;
+          const shiftWord = shiftN === 1 ? "смена" : shiftN < 5 ? "смены" : "смен";
+          const rcN = conflicts.length;
+          const rcWord = rcN === 1 ? "конфликт" : rcN < 5 ? "конфликта" : "конфликтов";
+          return (
+            <>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+                onClick={() => setLogOpen(false)}
+                style={{ position: "fixed", inset: 0, background: dark ? "rgba(0,0,0,0.62)" : "rgba(15,10,30,0.32)", backdropFilter: "blur(6px)", zIndex: 80, cursor: "pointer" }}
+              />
+              <motion.div
+                initial={{ opacity: 0, x: "-50%", y: "calc(-50% + 22px)", scale: 0.96 }}
+                animate={{ opacity: 1, x: "-50%", y: "-50%", scale: 1 }}
+                exit={{ opacity: 0, x: "-50%", y: "calc(-50% + 22px)", scale: 0.96 }}
+                transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                onClick={e => e.stopPropagation()}
+                style={{ position: "fixed", left: "50%", top: "50%", zIndex: 81, width: "min(540px, calc(100vw - 32px))", maxHeight: "calc(100dvh - 40px)", borderRadius: "22px", border: `1px solid ${border}`, background: dark ? "#0f0d1a" : "#ffffff", boxShadow: dark ? "0 32px 100px rgba(0,0,0,0.7)" : "0 28px 80px rgba(15,10,30,0.18)", display: "flex", flexDirection: "column", overflow: "hidden" }}
+              >
+                <div style={{ padding: "24px 24px 0", flexShrink: 0 }}>
+                  <p style={{ color: dark ? "#f0ecff" : "#0f0a1e", fontSize: "1.1rem", fontWeight: 650, margin: "0 0 4px", letterSpacing: "-0.02em" }}>Лог расписания</p>
+                  <p style={{ color: stepLabel, fontSize: "0.8rem", margin: "0 0 14px", lineHeight: 1.5 }}>
+                    {empN} {empWord}, {shiftN} {shiftWord}{rcN > 0 ? `, ${rcN} ${rcWord} по ролям` : ""}.
+                  </p>
+                  <div style={{ height: "1px", background: border, marginBottom: "14px" }} />
+                </div>
+                <div style={{ flex: 1, overflowY: "auto", padding: "0 24px" }}>
+                  {logLines.map((line, i) => (
+                    <p key={i} style={{ color: dark ? "#c4bde0" : "#5a4f72", fontSize: "0.79rem", margin: "0 0 4px", lineHeight: 1.55 }}>{line}</p>
+                  ))}
+                  {rcN > 0 && (
+                    <div style={{ marginTop: "14px", padding: "12px", borderRadius: "10px", background: dark ? "rgba(248,113,113,0.07)" : "rgba(248,113,113,0.05)", border: "1px solid rgba(248,113,113,0.22)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px" }}>
+                        <AlertCircle size={13} strokeWidth={2} style={{ color: "#f87171", flexShrink: 0 }} />
+                        <p style={{ color: "#f87171", fontSize: "0.79rem", fontWeight: 600, margin: 0 }}>Конфликты ролей</p>
+                      </div>
+                      {conflicts.map((c, i) => (
+                        <p key={i} style={{ color: dark ? "#c4bde0" : "#5a4f72", fontSize: "0.77rem", margin: i === 0 ? 0 : "4px 0 0", lineHeight: 1.5 }}>
+                          Смена {c.from}–{c.to}: роль «{c.role}» не назначена ни одному сотруднику.
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ height: "20px" }} />
+                </div>
+                <div style={{ padding: "14px 24px 24px", borderTop: `1px solid ${border}`, display: "flex", gap: "10px", flexShrink: 0 }}>
+                  <button onClick={() => setLogOpen(false)}
+                    style={{ flex: 1, padding: "11px 8px", borderRadius: "12px", border: `1px solid ${border}`, background: dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)", color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.875rem", fontWeight: 500, transition: "all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.background = dark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.1)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)"; }}
+                  >Продолжить</button>
+                  <button onClick={() => setLogOpen(false)}
+                    style={{ flex: 2, padding: "11px 8px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.875rem", fontWeight: 650, boxShadow: "0 4px 18px rgba(168,85,247,0.3)", transition: "all 0.15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.07)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; }}
+                  >Скачать Excel</button>
+                </div>
+              </motion.div>
+            </>
+          );
+        })()}
       </AnimatePresence>
     </div>
   );
