@@ -889,6 +889,7 @@ const wizardStepCopy: Record<LanguageCode, {
   rolePlaceholder: string;
   rolesEmpty: string;
   rolesHint: string;
+  startHint: string;
 }> = {
   ru: {
     employeesTitle: "Сотрудники",
@@ -899,6 +900,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "Например, менеджер",
     rolesEmpty: "Ролей пока нет",
     rolesHint: "Создайте каталог ролей для смен и сотрудников",
+    startHint: "Добавьте первого сотрудника, чтобы составить расписание",
   },
   en: {
     employeesTitle: "Employees",
@@ -909,6 +911,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "For example, manager",
     rolesEmpty: "No roles yet",
     rolesHint: "Create a role catalog for shifts and employees",
+    startHint: "Add your first employee to build a schedule",
   },
   kk: {
     employeesTitle: "Қызметкерлер",
@@ -919,6 +922,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "Мысалы, менеджер",
     rolesEmpty: "Әзірге рөл жоқ",
     rolesHint: "Ауысымдар мен қызметкерлер үшін рөлдер каталогын жасаңыз",
+    startHint: "Кесте жасау үшін бірінші қызметкерді қосыңыз",
   },
   de: {
     employeesTitle: "Mitarbeiter",
@@ -929,6 +933,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "Zum Beispiel Manager",
     rolesEmpty: "Noch keine Rollen",
     rolesHint: "Erstellen Sie einen Rollenkatalog für Schichten und Mitarbeiter",
+    startHint: "Fügen Sie den ersten Mitarbeiter hinzu, um einen Dienstplan zu erstellen",
   },
   fr: {
     employeesTitle: "Employés",
@@ -939,6 +944,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "Par exemple, manager",
     rolesEmpty: "Aucun rôle",
     rolesHint: "Créez un catalogue de rôles pour les shifts et employés",
+    startHint: "Ajoutez votre premier employé pour créer un planning",
   },
   es: {
     employeesTitle: "Empleados",
@@ -949,6 +955,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "Por ejemplo, gerente",
     rolesEmpty: "Aún no hay roles",
     rolesHint: "Crea un catálogo de roles para turnos y empleados",
+    startHint: "Añade tu primer empleado para crear un horario",
   },
   it: {
     employeesTitle: "Dipendenti",
@@ -959,6 +966,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "Per esempio, manager",
     rolesEmpty: "Ancora nessun ruolo",
     rolesHint: "Crea un catalogo ruoli per turni e dipendenti",
+    startHint: "Aggiungi il primo dipendente per creare un calendario",
   },
   pt: {
     employeesTitle: "Funcionários",
@@ -969,6 +977,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "Por exemplo, gerente",
     rolesEmpty: "Ainda não há funções",
     rolesHint: "Crie um catálogo de funções para turnos e funcionários",
+    startHint: "Adicione o primeiro funcionário para criar uma escala",
   },
   tr: {
     employeesTitle: "Çalışanlar",
@@ -979,6 +988,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "Örneğin, yönetici",
     rolesEmpty: "Henüz rol yok",
     rolesHint: "Vardiyalar ve çalışanlar için rol kataloğu oluşturun",
+    startHint: "Plan oluşturmak için ilk çalışanı ekleyin",
   },
   zh: {
     employeesTitle: "员工",
@@ -989,6 +999,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "例如，经理",
     rolesEmpty: "还没有角色",
     rolesHint: "为班次和员工创建角色目录",
+    startHint: "添加第一名员工以开始编排排班计划",
   },
   ja: {
     employeesTitle: "従業員",
@@ -999,6 +1010,7 @@ const wizardStepCopy: Record<LanguageCode, {
     rolePlaceholder: "例: マネージャー",
     rolesEmpty: "役割はまだありません",
     rolesHint: "シフトと従業員用の役割カタログを作成します",
+    startHint: "スケジュールを作成するために最初の従業員を追加してください",
   },
 };
 
@@ -1019,17 +1031,17 @@ const genCopy: Record<LanguageCode, { done: string; doneText: string; signUp: st
 
 // ─── Step title copy ──────────────────────────────────────────────────────────
 const stepTitlesCopy: Record<LanguageCode, [string, string, string, string]> = {
-  ru: ["Команда и роли",      "Расписание",      "Смены",      "Настройки"    ],
-  en: ["Team & roles",        "Schedule",        "Shifts",     "Settings"     ],
-  kk: ["Команда мен рөлдер", "Кесте",           "Ауысымдар",  "Баптаулар"    ],
-  de: ["Team & Rollen",       "Dienstplan",      "Schichten",  "Einstellungen"],
-  fr: ["Équipe & rôles",      "Planning",        "Shifts",     "Paramètres"   ],
-  es: ["Equipo & roles",      "Horario",         "Turnos",     "Ajustes"      ],
-  it: ["Team & ruoli",        "Calendario",      "Turni",      "Impostazioni" ],
-  pt: ["Equipe & funções",    "Escala",          "Turnos",     "Configurações"],
-  tr: ["Ekip & roller",       "Plan",            "Vardiyalar", "Ayarlar"      ],
-  zh: ["团队与角色",           "排班计划",        "班次",       "设置"         ],
-  ja: ["チーム・役割",         "スケジュール",    "シフト",     "設定"         ],
+  ru: ["Сотрудники",    "Расписание",   "Смены",      "Настройки"    ],
+  en: ["Employees",     "Schedule",     "Shifts",     "Settings"     ],
+  kk: ["Қызметкерлер", "Кесте",        "Ауысымдар",  "Баптаулар"    ],
+  de: ["Mitarbeiter",   "Dienstplan",   "Schichten",  "Einstellungen"],
+  fr: ["Employés",      "Planning",     "Shifts",     "Paramètres"   ],
+  es: ["Empleados",     "Horario",      "Turnos",     "Ajustes"      ],
+  it: ["Dipendenti",    "Calendario",   "Turni",      "Impostazioni" ],
+  pt: ["Funcionários",  "Escala",       "Turnos",     "Configurações"],
+  tr: ["Çalışanlar",    "Plan",         "Vardiyalar", "Ayarlar"      ],
+  zh: ["员工",          "排班计划",     "班次",       "设置"         ],
+  ja: ["従業員",        "スケジュール", "シフト",     "設定"         ],
 };
 
 // ─── Panel copy (RolesPanel translations) ────────────────────────────────────
@@ -2054,43 +2066,26 @@ function EmployeeRow({ emp, dark, onDelete, onChipClick }: { emp: EmpData; dark:
 }
 
 // ─── Step 1: Team ────────────────────────────────────────────────────────────
-function EmpTeamRow({ emp, activeFeature, onChipClick, onDelete, dark, actionLabels }: {
-  emp: EmpData; activeFeature: string | null;
-  onChipClick: (key: string) => void; onDelete: () => void;
-  dark: boolean; actionLabels: Record<string, string>;
+function EmpTeamRow({ emp, isSelected, onSelect, dark }: {
+  emp: EmpData; isSelected: boolean;
+  onSelect: () => void;
+  dark: boolean;
 }) {
   const tc = colors(dark);
   return (
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.18 }}
-      style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px", borderRadius: "10px", border: `1px solid ${tc.rowBorder}`, marginBottom: "6px" }}
+      onClick={onSelect}
+      style={{
+        display: "flex", alignItems: "center", gap: "10px",
+        padding: "8px 10px", borderRadius: "10px", marginBottom: "2px",
+        cursor: "pointer",
+        background: isSelected ? (dark ? "rgba(168,85,247,0.12)" : "rgba(168,85,247,0.08)") : "transparent",
+        border: `1px solid ${isSelected ? (dark ? "rgba(168,85,247,0.22)" : "rgba(168,85,247,0.16)") : "transparent"}`,
+        transition: "background 0.15s, border-color 0.15s",
+      }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <Avatar name={emp.name} size={32} />
-        <span style={{ flex: 1, color: tc.headline, fontSize: "0.9rem", fontWeight: 500, letterSpacing: "-0.01em" }}>{emp.name}</span>
-        <button onClick={onDelete} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", color: tc.iconMuted, transition: "color 0.15s", flexShrink: 0 }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#f87171")} onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
-        ><Trash2 size={13} strokeWidth={1.8} /></button>
-      </div>
-      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-        {ACTIONS.map(({ key, icon: Icon }) => {
-          const isActive = activeFeature === key;
-          const hasDat = hasData(emp, key);
-          return (
-            <button key={key} onClick={() => onChipClick(key)} style={{
-              display: "inline-flex", alignItems: "center", gap: "5px",
-              padding: "4px 10px", borderRadius: "99px", cursor: "pointer",
-              background: isActive ? "linear-gradient(135deg,#a855f7,#ec4899)" : hasDat ? tc.chipActiveBg : tc.chipBg,
-              border: `1px solid ${isActive ? "transparent" : hasDat ? tc.chipActiveBorder : tc.rowBorder}`,
-              color: isActive ? "#fff" : hasDat ? tc.chipActiveFg : (dark ? "#c4bde0" : "#8878aa"),
-              fontSize: "0.72rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif",
-              transition: "all 0.15s", whiteSpace: "nowrap",
-              boxShadow: isActive ? "0 2px 8px rgba(168,85,247,0.3)" : "none",
-            }}>
-              <Icon size={11} strokeWidth={1.8} />{actionLabels[key] ?? key}
-            </button>
-          );
-        })}
-      </div>
+      <Avatar name={emp.name} size={32} />
+      <span style={{ flex: 1, color: tc.headline, fontSize: "0.9rem", fontWeight: 500, letterSpacing: "-0.01em" }}>{emp.name}</span>
     </motion.div>
   );
 }
@@ -2106,16 +2101,13 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
 }) {
   const [empInput, setEmpInput] = useState("");
   const [empFocused, setEmpFocused] = useState(false);
-  const [roleInput, setRoleInput] = useState("");
-  const [roleFocused, setRoleFocused] = useState(false);
-  const [editingRole, setEditingRole] = useState<string | null>(null);
-  const [editingValue, setEditingValue] = useState("");
-  // Which employee+feature is shown in right panel. null = show global roles.
-  const [selected, setSelected] = useState<{ empId: number; feature: string } | null>(null);
+  const [selectedEmpId, setSelectedEmpId] = useState<number | null>(null);
+  const [popupFeature, setPopupFeature] = useState<string | null>(null);
   const [draftEmp, setDraftEmp] = useState<EmpData | null>(null);
+  const [pendingSelect, setPendingSelect] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.matchMedia("(max-width: 639px)").matches);
-  const [mobileRolesOpen, setMobileRolesOpen] = useState(false);
   const empRef = useRef<HTMLInputElement>(null);
+  const prevLenRef = useRef(0);
   const tc = colors(dark);
 
   useEffect(() => {
@@ -2125,24 +2117,36 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  const handleAddEmp = () => { const t = empInput.trim(); if (!t) return; onAddEmployee(t); setEmpInput(""); empRef.current?.focus(); };
-  const handleAddRole = () => { const v = roleInput.trim(); if (!v) return; onAddRole(v); setRoleInput(""); };
-  const saveRename = () => {
-    if (!editingRole) return;
-    const v = editingValue.trim();
-    if (v) onRenameRole(editingRole, v);
-    setEditingRole(null); setEditingValue("");
+  useEffect(() => {
+    if (pendingSelect && employees.length > prevLenRef.current && employees.length > 0) {
+      const newest = employees[employees.length - 1];
+      setSelectedEmpId(newest.id);
+      setDraftEmp(cloneEmployee(newest));
+      setPendingSelect(false);
+    }
+    prevLenRef.current = employees.length;
+  }, [employees, pendingSelect]);
+
+  const handleAddEmp = () => {
+    const t = empInput.trim();
+    if (!t) return;
+    if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp);
+    onAddEmployee(t);
+    setEmpInput("");
+    setPendingSelect(true);
+    empRef.current?.focus();
   };
 
-  const openFeature = (empId: number, feature: string) => {
+  const selectEmp = (empId: number) => {
     if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp);
     const emp = employees.find(e => e.id === empId);
     if (emp) setDraftEmp(cloneEmployee(emp));
-    setSelected({ empId, feature });
+    setSelectedEmpId(empId);
   };
+  const closePopup = () => { if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp); setPopupFeature(null); };
   const saveAndClose = () => {
     if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp);
-    setDraftEmp(null); setSelected(null); setMobileRolesOpen(false);
+    setDraftEmp(null); setSelectedEmpId(null); setPopupFeature(null);
   };
   const updateDraft = (patch: Partial<EmpData>) => setDraftEmp(prev => prev ? { ...prev, ...patch } : prev);
   const toggleDraftRole = (empId: number, role: string) => {
@@ -2152,107 +2156,133 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
     });
   };
 
-  const activeEmp = draftEmp ?? (selected ? employees.find(e => e.id === selected.empId) : null);
+  const actionLabels: Record<string, string> = {
+    roles: copy.actions.roles, absences: copy.actions.absences,
+    dates: copy.actions.dates, timePrefs: copy.actions.timePrefs, socialPrefs: copy.actions.socialPrefs,
+  };
 
-  const renderFeaturePanel = () => {
-    if (!selected || !activeEmp) return null;
+  const activeEmp = draftEmp ?? (selectedEmpId !== null ? employees.find(e => e.id === selectedEmpId) : null);
+
+  const renderEmpPanel = () => {
+    if (!activeEmp) return null;
+    const settings = [
+      { key: "roles",       label: actionLabels.roles,       desc: activeEmp.roles.length > 0 ? activeEmp.roles.join(", ") : "Роль не назначена",        btnLabel: activeEmp.roles.length > 0 ? "Изменить" : "Назначить"  },
+      { key: "absences",    label: actionLabels.absences,    desc: activeEmp.absences.length > 0 ? `${activeEmp.absences.length} записей` : "Нет записей", btnLabel: activeEmp.absences.length > 0 ? "Изменить" : "Добавить"  },
+      { key: "dates",       label: actionLabels.dates,       desc: activeEmp.hired ? `С ${activeEmp.hired}` : "Не указано",                               btnLabel: activeEmp.hired ? "Изменить" : "Указать"                },
+      { key: "timePrefs",   label: actionLabels.timePrefs,   desc: activeEmp.timePrefs.length > 0 ? "Настроено" : "Не настроено",                         btnLabel: activeEmp.timePrefs.length > 0 ? "Изменить" : "Настроить" },
+      { key: "socialPrefs", label: actionLabels.socialPrefs, desc: activeEmp.socialPrefs.length > 0 ? "Настроено" : "Не настроено",                       btnLabel: activeEmp.socialPrefs.length > 0 ? "Изменить" : "Настроить" },
+    ];
     return (
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
-          {selected.feature === "roles"       && <RolesPanel emp={activeEmp} globalRoles={globalRoles} onToggleRole={toggleDraftRole} onAddRole={onAddRole} dark={dark} label={actionLabels.roles} pCopy={panelsCopy} />}
-          {selected.feature === "absences"    && <AbsencesPanel emp={activeEmp} onUpdate={a => updateDraft({ absences: a })} dark={dark} label={actionLabels.absences} pc={panelCopy2} />}
-          {selected.feature === "dates"       && <HireDatesPanel emp={activeEmp} onUpdate={(h, f) => updateDraft({ hired: h, fired: f })} dark={dark} label={actionLabels.dates} pc={panelCopy2} />}
-          {selected.feature === "timePrefs"   && <TimePrefsPanel emp={activeEmp} onUpdate={p => updateDraft({ timePrefs: p })} dark={dark} label={actionLabels.timePrefs} pc={panelCopy2} />}
-          {selected.feature === "socialPrefs" && <SocialPrefsPanel emp={activeEmp} allEmployees={employees} onUpdate={p => updateDraft({ socialPrefs: p })} dark={dark} label={actionLabels.socialPrefs} pc={panelCopy2} />}
+      <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
+        <p style={{ margin: "0 0 20px", fontSize: "1.05rem", fontWeight: 650, color: tc.headline, letterSpacing: "-0.025em" }}>{activeEmp.name}</p>
+        <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+          {settings.map(({ key, label, desc, btnLabel }) => (
+            <div key={key} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "9px 0" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ margin: "0 0 2px", fontSize: "0.9rem", fontWeight: 600, color: tc.headline, letterSpacing: "-0.01em" }}>{label}</p>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: tc.sub, lineHeight: 1.35, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{desc}</p>
+              </div>
+              <button onClick={() => setPopupFeature(key)} style={{ flexShrink: 0, padding: "6px 14px", borderRadius: "8px", border: "none", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", fontSize: "0.76rem", fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", whiteSpace: "nowrap" }}>
+                {btnLabel}
+              </button>
+            </div>
+          ))}
         </div>
-        <div style={{ paddingTop: "12px", display: "flex", justifyContent: "flex-end", flexShrink: 0 }}>
-          <button onClick={saveAndClose} style={{ padding: "10px 20px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", fontSize: "0.875rem", fontWeight: 600, fontFamily: "'DM Sans',sans-serif", boxShadow: "0 3px 12px rgba(168,85,247,0.3)" }}>
-            {copy.done}
+        <div style={{ paddingTop: "14px", flexShrink: 0 }}>
+          <button
+            onClick={() => { if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp); onDeleteEmployee(activeEmp.id); setSelectedEmpId(null); setDraftEmp(null); setPopupFeature(null); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "none", border: `1px solid ${dark ? "rgba(248,113,113,0.22)" : "rgba(248,113,113,0.18)"}`, borderRadius: "8px", padding: "7px 14px", cursor: "pointer", color: dark ? "#fca5a5" : "#ef4444", fontSize: "0.78rem", fontFamily: "'DM Sans',sans-serif" }}
+          >
+            <Trash2 size={12} strokeWidth={1.9} />Удалить сотрудника
           </button>
         </div>
       </div>
     );
   };
 
-  const renderRolesPanel = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: "10px", height: "100%", minHeight: 0 }}>
-      <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1rem", margin: 0, letterSpacing: "-0.02em" }}>{stepCopy.rolesTitle}</p>
-      <div style={{ display: "flex", gap: "6px" }}>
-        <input value={roleInput} onChange={e => setRoleInput(e.target.value)}
-          onFocus={() => setRoleFocused(true)} onBlur={() => setRoleFocused(false)}
-          onKeyDown={e => { if (e.key === "Enter") handleAddRole(); }}
-          placeholder={stepCopy.rolePlaceholder}
-          style={{ flex: 1, background: tc.inputBg, border: `1.5px solid ${roleFocused ? "#a855f7" : tc.inputBorder}`, borderRadius: "10px", padding: "11px 14px", color: tc.headline, fontSize: "0.9rem", fontFamily: "'DM Sans',sans-serif", outline: "none", transition: "border-color 0.18s", boxSizing: "border-box" as const }}
+  const renderPopup = () => {
+    if (!popupFeature || !activeEmp) return null;
+    const popupContent = (
+      <>
+        {popupFeature === "roles"       && <RolesPanel emp={activeEmp} globalRoles={globalRoles} onToggleRole={toggleDraftRole} onAddRole={onAddRole} dark={dark} label={actionLabels.roles} pCopy={panelsCopy} />}
+        {popupFeature === "absences"    && <AbsencesPanel emp={activeEmp} onUpdate={a => updateDraft({ absences: a })} dark={dark} label={actionLabels.absences} pc={panelCopy2} />}
+        {popupFeature === "dates"       && <HireDatesPanel emp={activeEmp} onUpdate={(h, f) => updateDraft({ hired: h, fired: f })} dark={dark} label={actionLabels.dates} pc={panelCopy2} />}
+        {popupFeature === "timePrefs"   && <TimePrefsPanel emp={activeEmp} onUpdate={p => updateDraft({ timePrefs: p })} dark={dark} label={actionLabels.timePrefs} pc={panelCopy2} />}
+        {popupFeature === "socialPrefs" && <SocialPrefsPanel emp={activeEmp} allEmployees={employees} onUpdate={p => updateDraft({ socialPrefs: p })} dark={dark} label={actionLabels.socialPrefs} pc={panelCopy2} />}
+      </>
+    );
+    if (isMobile) {
+      return (
+        <>
+          <motion.div key="popup-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+            onClick={closePopup}
+            style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.48)", backdropFilter: "blur(2px)" }}
+          />
+          <motion.div key="popup-sheet" initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: "78dvh", borderRadius: "20px 20px 0 0", background: dark ? "#14121e" : "#ffffff", borderTop: `1px solid ${tc.rowBorder}`, zIndex: 201, display: "flex", flexDirection: "column", overflow: "hidden" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 20px 10px", flexShrink: 0 }}>
+              <div style={{ width: "36px", height: "4px", borderRadius: "2px", background: tc.faint, position: "absolute", top: "10px", left: "50%", transform: "translateX(-50%)" }} />
+              <p style={{ margin: "16px 0 0", color: tc.headline, fontWeight: 600, fontSize: "0.9rem", letterSpacing: "-0.01em" }}>{actionLabels[popupFeature] ?? popupFeature}</p>
+              <button onClick={closePopup} style={{ marginTop: "16px", background: "none", border: "none", cursor: "pointer", padding: "4px", color: tc.sub, display: "flex", alignItems: "center" }}><X size={16} strokeWidth={2} /></button>
+            </div>
+            <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "8px 20px 16px" }}>{popupContent}</div>
+            <div style={{ padding: "12px 20px 24px", flexShrink: 0, display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={closePopup} style={{ padding: "10px 24px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", fontSize: "0.875rem", fontWeight: 600, fontFamily: "'DM Sans',sans-serif" }}>{copy.done}</button>
+            </div>
+          </motion.div>
+        </>
+      );
+    }
+    return (
+      <>
+        <motion.div key="popup-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
+          onClick={closePopup}
+          style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(3px)" }}
         />
-        <button onClick={handleAddRole} style={{ background: roleInput.trim() ? "linear-gradient(135deg,#a855f7,#ec4899)" : (dark ? "rgba(168,85,247,0.08)" : "rgba(168,85,247,0.06)"), border: `1.5px solid ${roleInput.trim() ? "transparent" : tc.inputBorder}`, borderRadius: "10px", cursor: roleInput.trim() ? "pointer" : "default", padding: "0 14px", display: "flex", alignItems: "center", color: roleInput.trim() ? "#fff" : tc.iconMuted, transition: "all 0.18s", flexShrink: 0 }}>
-          <Plus size={16} strokeWidth={2} />
-        </button>
-      </div>
-      <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-        {globalRoles.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "24px 0" }}>
-            <Tag size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 8px" }} />
-            <p style={{ color: tc.sub, fontSize: "0.82rem", margin: "0 0 2px", fontWeight: 500 }}>{stepCopy.rolesEmpty}</p>
-            <p style={{ color: tc.faint, fontSize: "0.74rem", margin: 0 }}>{stepCopy.rolesHint}</p>
+        <motion.div key="popup-panel" initial={{ opacity: 0, scale: 0.96, y: 8 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.96, y: 6 }} transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
+          style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(480px, calc(100vw - 32px))", maxHeight: "80dvh", background: dark ? "#14121e" : "#ffffff", borderRadius: "16px", border: `1px solid ${tc.rowBorder}`, boxShadow: dark ? "0 24px 80px rgba(0,0,0,0.6)" : "0 24px 64px rgba(0,0,0,0.13)", zIndex: 201, display: "flex", flexDirection: "column", overflow: "hidden" }}
+        >
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px 14px", borderBottom: `1px solid ${tc.rowBorder}`, flexShrink: 0 }}>
+            <p style={{ margin: 0, color: tc.headline, fontWeight: 600, fontSize: "0.92rem", letterSpacing: "-0.01em" }}>{actionLabels[popupFeature] ?? popupFeature}</p>
+            <button onClick={closePopup} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: tc.sub, display: "flex", alignItems: "center" }}><X size={16} strokeWidth={2} /></button>
           </div>
-        ) : globalRoles.map(role => (
-          <div key={role} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 10px", borderRadius: "10px", border: `1px solid ${tc.rowBorder}`, marginBottom: "6px" }}>
-            <Tag size={14} strokeWidth={1.8} style={{ color: dark ? "#c4b5fd" : "#7c3aed", flexShrink: 0 }} />
-            {editingRole === role ? (
-              <input value={editingValue} onChange={e => setEditingValue(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter") saveRename(); if (e.key === "Escape") setEditingRole(null); }}
-                autoFocus
-                style={{ flex: 1, minWidth: 0, background: tc.inputBg, border: `1.5px solid #a855f7`, borderRadius: "8px", padding: "6px 10px", color: tc.headline, fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", outline: "none", boxSizing: "border-box" as const }}
-              />
-            ) : (
-              <button onClick={() => { setEditingRole(role); setEditingValue(role); }}
-                style={{ flex: 1, minWidth: 0, background: "none", border: "none", padding: 0, color: tc.headline, fontSize: "0.88rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", textAlign: "left", cursor: "pointer" }}
-              >{role}</button>
-            )}
-            {editingRole === role && (
-              <button onClick={saveRename} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: dark ? "#c4b5fd" : "#7c3aed", display: "flex" }}>
-                <Check size={13} strokeWidth={2.2} />
-              </button>
-            )}
-            <button onClick={() => onDeleteRole(role)} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", color: tc.iconMuted, display: "flex", borderRadius: "6px", transition: "color 0.15s", flexShrink: 0 }}
-              onMouseEnter={e => (e.currentTarget.style.color = "#f87171")} onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
-            ><Trash2 size={13} strokeWidth={1.8} /></button>
+          <div style={{ flex: 1, minHeight: 0, overflowY: "auto", padding: "16px 20px" }}>{popupContent}</div>
+          <div style={{ padding: "14px 20px", borderTop: `1px solid ${tc.rowBorder}`, flexShrink: 0, display: "flex", justifyContent: "flex-end" }}>
+            <button onClick={closePopup} style={{ padding: "9px 22px", borderRadius: "10px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", fontSize: "0.875rem", fontWeight: 600, fontFamily: "'DM Sans',sans-serif", boxShadow: "0 3px 12px rgba(168,85,247,0.28)" }}>{copy.done}</button>
           </div>
-        ))}
-      </div>
+        </motion.div>
+      </>
+    );
+  };
+
+  const renderRolesPanel = () => (
+    <div style={{ flex: 1, minHeight: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      {employees.length === 0 && (
+        <div style={{ textAlign: "center", padding: "24px 32px", maxWidth: "260px" }}>
+          <UserRound size={32} strokeWidth={1.1} style={{ color: tc.faint, display: "block", margin: "0 auto 12px" }} />
+          <p style={{ color: tc.sub, fontSize: "0.85rem", margin: 0, lineHeight: 1.5 }}>{stepCopy.startHint}</p>
+        </div>
+      )}
     </div>
   );
 
   const renderRightPanel = () => {
-    if (selected && activeEmp) return renderFeaturePanel();
-    return renderRolesPanel();
+    if (!selectedEmpId || !activeEmp) return renderRolesPanel();
+    return renderEmpPanel();
   };
 
-  const actionLabels: Record<string, string> = {
-    roles: copy.actions.roles, absences: copy.actions.absences,
-    dates: copy.actions.dates, timePrefs: copy.actions.timePrefs, socialPrefs: copy.actions.socialPrefs,
-  };
-
-  const sheetOpen = selected !== null || mobileRolesOpen;
-  const sheetTitle = selected
-    ? `${activeEmp?.name ?? ""} · ${actionLabels[selected.feature] ?? selected.feature}`
-    : stepCopy.rolesTitle;
+  const sheetOpen = selectedEmpId !== null;
+  const sheetTitle = activeEmp?.name ?? "";
 
   const empListSection = (
     <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
       <AnimatePresence>
-        {employees.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ textAlign: "center", padding: "24px 0" }}>
-            <UserRound size={28} strokeWidth={1.2} style={{ color: tc.faint, display: "block", margin: "0 auto 8px" }} />
-            <p style={{ color: tc.sub, fontSize: "0.82rem", margin: "0 0 2px", fontWeight: 500 }}>{stepCopy.employeesEmpty}</p>
-            <p style={{ color: tc.faint, fontSize: "0.74rem", margin: 0 }}>{stepCopy.employeesHint}</p>
-          </motion.div>
-        ) : employees.map(emp => (
+        {employees.map(emp => (
           <EmpTeamRow key={emp.id} emp={draftEmp?.id === emp.id ? draftEmp : emp}
-            activeFeature={selected?.empId === emp.id ? selected.feature : null}
-            onChipClick={key => openFeature(emp.id, key)}
-            onDelete={() => { if (selected?.empId === emp.id) { setSelected(null); setDraftEmp(null); } onDeleteEmployee(emp.id); }}
-            dark={dark} actionLabels={actionLabels}
+            isSelected={selectedEmpId === emp.id}
+            onSelect={() => selectEmp(emp.id)}
+            dark={dark}
           />
         ))}
       </AnimatePresence>
@@ -2276,16 +2306,6 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
   if (isMobile) {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", height: "100%", minHeight: 0 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
-          <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1rem", margin: 0, letterSpacing: "-0.02em" }}>{stepCopy.employeesTitle}</p>
-          <button
-            onClick={() => { if (draftEmp) onUpdateEmp(draftEmp.id, draftEmp); setDraftEmp(null); setSelected(null); setMobileRolesOpen(true); }}
-            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 12px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.8rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}
-          >
-            <Tag size={12} strokeWidth={1.8} />{stepCopy.rolesTitle}
-            {globalRoles.length > 0 && <span style={{ background: dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.15)", borderRadius: "99px", padding: "1px 7px", fontSize: "0.72rem", fontWeight: 600 }}>{globalRoles.length}</span>}
-          </button>
-        </div>
         {empInputSection}
         {empListSection}
 
@@ -2314,12 +2334,13 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
                   <p style={{ margin: 0, color: tc.headline, fontWeight: 600, fontSize: "0.9rem", letterSpacing: "-0.01em", alignSelf: "flex-start" }}>{sheetTitle}</p>
                 </div>
                 <div style={{ flex: 1, minHeight: 0, padding: "12px 20px 24px", display: "flex", flexDirection: "column" }}>
-                  {selected ? renderFeaturePanel() : renderRolesPanel()}
+                  {renderEmpPanel()}
                 </div>
               </motion.div>
             </>
           )}
         </AnimatePresence>
+        <AnimatePresence>{renderPopup()}</AnimatePresence>
       </div>
     );
   }
@@ -2328,26 +2349,23 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
     <div style={{ display: "flex", gap: "20px", height: "100%", minHeight: 0 }}>
       {/* Left: employees */}
       <div style={{ flex: "0 0 min(52%, 340px)", minWidth: 0, display: "flex", flexDirection: "column", gap: "10px", minHeight: 0 }}>
-        <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1rem", margin: 0, letterSpacing: "-0.02em" }}>{stepCopy.employeesTitle}</p>
         {empInputSection}
         {empListSection}
       </div>
 
-      {/* Divider */}
-      <div style={{ width: "1px", background: tc.rowBorder, flexShrink: 0, alignSelf: "stretch" }} />
-
-      {/* Right: roles or feature panel */}
-      <div style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
+      {/* Right: emp panel or empty state */}
+      <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: "flex", flexDirection: "column" }}>
         <AnimatePresence mode="wait">
-          <motion.div key={selected ? `${selected.empId}-${selected.feature}` : "roles"}
+          <motion.div key={selectedEmpId ?? "empty"}
             initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }}
             transition={{ duration: 0.16 }}
-            style={{ height: "100%", display: "flex", flexDirection: "column" }}
+            style={{ flex: 1, display: "flex", flexDirection: "column" }}
           >
             {renderRightPanel()}
           </motion.div>
         </AnimatePresence>
       </div>
+      <AnimatePresence>{renderPopup()}</AnimatePresence>
     </div>
   );
 }
@@ -2861,24 +2879,42 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
 
   return (
     <div style={{ minHeight: "100dvh", background: bg, fontFamily: "'DM Sans',sans-serif", display: "flex", flexDirection: "column" }}>
-      {/* Glow */}
-      <div style={{ position: "fixed", inset: 0, pointerEvents: "none", background: "radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.13), rgba(236,72,153,0.05) 42%, transparent 72%)", zIndex: 0 }} />
+      {/* Step indicator: ring + "Шаг N/4" */}
+      <div style={{ position: "relative", zIndex: 10, padding: "16px clamp(16px, 5vw, 48px) 0", display: "flex", alignItems: "center", gap: "9px" }}>
+        {/* Circular progress ring */}
+        <svg width="20" height="20" viewBox="0 0 20 20" style={{ flexShrink: 0 }}>
+          <defs>
+            <linearGradient id="progGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#c084fc" />
+              <stop offset="100%" stopColor="#ec4899" />
+            </linearGradient>
+          </defs>
+          <circle cx="10" cy="10" r="7.5" fill="none"
+            stroke={dark ? "rgba(168,85,247,0.15)" : "rgba(168,85,247,0.12)"}
+            strokeWidth="2" />
+          <motion.circle cx="10" cy="10" r="7.5" fill="none"
+            stroke="url(#progGrad)"
+            strokeWidth="2"
+            strokeLinecap="round"
+            transform="rotate(-90 10 10)"
+            initial={{ strokeDasharray: `0 ${2 * Math.PI * 7.5}` }}
+            animate={{ strokeDasharray: `${(step / TOTAL_STEPS) * 2 * Math.PI * 7.5} ${2 * Math.PI * 7.5}` }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+          />
+        </svg>
 
-      {/* Header */}
-      <header style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px clamp(16px, 5vw, 48px)" }}>
-        <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: "6px", border: "none", background: "transparent", color: stepLabel, cursor: "pointer", fontFamily: "inherit", fontSize: "0.88rem" }}>
-          <House size={15} strokeWidth={1.8} />
-        </button>
-        <span style={{ background: "linear-gradient(120deg,#c084fc,#ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: "1rem", fontWeight: 600, letterSpacing: "-0.02em" }}>Shifty</span>
-      </header>
+        {/* Step counter — muted, no bold */}
+        <span style={{ fontSize: "0.8rem", fontWeight: 400, color: dark ? "rgba(196,189,224,0.5)" : "rgba(168,158,192,0.6)", letterSpacing: "0.01em" }}>
+          {copy.step} {step}/{TOTAL_STEPS}
+        </span>
+      </div>
 
-      {/* Progress + step title */}
-      <div style={{ position: "relative", zIndex: 10, padding: "0 clamp(16px, 5vw, 48px) 0" }}>
-        <ProgressBar step={step} total={TOTAL_STEPS} stepNames={stepTitles} onStepClick={setStep} />
+      {/* Step heading */}
+      <div style={{ position: "relative", zIndex: 10, padding: "14px clamp(16px, 5vw, 48px) 16px" }}>
         <AnimatePresence mode="wait">
           <motion.h2 key={step} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.2 }}
-            style={{ margin: "14px 0 16px", fontSize: "clamp(1.15rem, 3vw, 1.45rem)", fontWeight: 650, letterSpacing: "-0.025em", color: dark ? "#f0ecff" : "#0f0a1e" }}
+            transition={{ duration: 0.22 }}
+            style={{ margin: 0, fontSize: "clamp(1.25rem, 3vw, 1.55rem)", fontWeight: 650, letterSpacing: "-0.028em", color: dark ? "#f0ecff" : "#0f0a1e" }}
           >{stepTitles[step - 1]}</motion.h2>
         </AnimatePresence>
       </div>
@@ -2888,7 +2924,7 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
         <AnimatePresence mode="wait">
           <motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", maxWidth: step === 1 ? "1040px" : "700px", width: "100%", margin: "0 auto", alignSelf: "center" }}
+            style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", maxWidth: step === 1 ? "10040px" : "700px", width: "100%", margin: step === 1 ? "0" : "0 auto", alignSelf: step === 1 ? "flex-start" : "center" }}
           >
             {step === 1 && (
               <StepTeam
