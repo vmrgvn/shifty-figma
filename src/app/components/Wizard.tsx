@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
 import { StepThree, StepFour, Step3Data, defaultStep3, hasInvalidShiftTimes } from "./WizardStep3";
 import { StepFive, Step5Data, defaultStep5, hasInvalidBreakTimes } from "./WizardStep5";
 import { motion, AnimatePresence } from "motion/react";
 import {
   X, Plus, Trash2, Tag, CalendarOff, CalendarRange,
   Clock3, Users2, UserRound, ChevronLeft, Search, Check, House,
-  Stethoscope, Umbrella, Calendar, ThumbsUp, ThumbsDown, AlertCircle,
+  Stethoscope, Umbrella, Calendar, ThumbsUp, ThumbsDown, AlertCircle, MoreHorizontal,
 } from "lucide-react";
+import { NavMenu, ThemeMode } from "./NavMenu";
 import type { LanguageCode } from "./NavMenu";
 
 // ─── Color tokens ─────────────────────────────────────────────────────────────
@@ -201,6 +203,13 @@ const wizardCopy: Record<LanguageCode, {
     timePrefs: string;
     socialPrefs: string;
   };
+  tabHints: {
+    roles: string;
+    absences: string;
+    dates: string;
+    timePrefs: string;
+    socialPrefs: string;
+  };
   schedule: {
     title: string;
     desc: string;
@@ -260,6 +269,13 @@ const wizardCopy: Record<LanguageCode, {
       dates: "Найм / увольнение",
       timePrefs: "Время",
       socialPrefs: "Команда",
+    },
+    tabHints: {
+      roles: "Добавь роли из общего списка или создай новые — выбери те, которые подходят этому сотруднику.",
+      absences: "Укажи периоды, когда сотрудник точно не работает — больничные, отпуск, отгулы.",
+      dates: "Необязательная информация, но она позволит корректнее составить расписание и не назначить смену уволенному или ещё не вышедшему сотруднику.",
+      timePrefs: "Отметь, в какое время сотруднику удобно работать, а в какое — нет.",
+      socialPrefs: "Укажите, с кем сотрудник хочет или не хочет работать в смену.",
     },
     schedule: {
       title: "Название расписания",
@@ -321,6 +337,13 @@ const wizardCopy: Record<LanguageCode, {
       timePrefs: "Time",
       socialPrefs: "Team",
     },
+    tabHints: {
+      roles: "Determines which shifts this employee can work. Assign at least one role — AI needs it to schedule them.",
+      absences: "Sick days, vacations and other time off. Shifts won't be assigned on these dates.",
+      dates: "From when they're available and until when. Prevents scheduling outside the employment period.",
+      timePrefs: "Preferred and avoided shift times. AI factors these into the schedule.",
+      socialPrefs: "Who works well together and who to keep apart. Useful for team dynamics.",
+    },
     schedule: {
       title: "Schedule name",
       desc: "Internal name so you can find this schedule later.",
@@ -380,6 +403,13 @@ const wizardCopy: Record<LanguageCode, {
       dates: "Қабылдау / шығару",
       timePrefs: "Уақыт",
       socialPrefs: "Команда",
+    },
+    tabHints: {
+      roles: "Қай ауысымдарға қызметкерді қоюды анықтайды. Кемінде бір рөл тағайындаңыз.",
+      absences: "Аурухана, демалыс және басқа кезеңдер — бұл күндерге ауысым қойылмайды.",
+      dates: "Қашаннан қол жетімді және қашанға дейін. Жұмыс кезеңінен тыс ауысым қоймауға көмектеседі.",
+      timePrefs: "Ыңғайлы және ыңғайсыз ауысым уақыты. AI бұл қалауларды ескереді.",
+      socialPrefs: "Кімді бірге қою керек, кімді жоқ. Команда тиімділігі үшін пайдалы.",
     },
     schedule: {
       title: "Кесте атауы",
@@ -441,6 +471,13 @@ const wizardCopy: Record<LanguageCode, {
       timePrefs: "Zeit",
       socialPrefs: "Team",
     },
+    tabHints: {
+      roles: "Bestimmt, für welche Schichten eingeplant werden kann. Mindestens eine Rolle zuweisen.",
+      absences: "Krankmeldungen, Urlaub und andere Zeiten — keine Schichten in diesen Zeiträumen.",
+      dates: "Ab wann verfügbar und bis wann. Verhindert Planung außerhalb des Arbeitszeitraums.",
+      timePrefs: "Bevorzugte und zu vermeidende Schichtzeiten. Die AI berücksichtigt diese Wünsche.",
+      socialPrefs: "Wer gut zusammenarbeitet und wer nicht. Nützlich für die Teameffektivität.",
+    },
     schedule: {
       title: "Planname",
       desc: "Interner Name, damit Sie diesen Plan später leichter finden.",
@@ -500,6 +537,13 @@ const wizardCopy: Record<LanguageCode, {
       dates: "Embauche / départ",
       timePrefs: "Temps",
       socialPrefs: "Équipe",
+    },
+    tabHints: {
+      roles: "Détermine les shifts pour lesquels l'employé peut être planifié. Attribuez au moins un rôle.",
+      absences: "Congés maladie, vacances et autres périodes — pas de shifts planifiés à ces dates.",
+      dates: "À partir de quand disponible et jusqu'à quand. Évite de planifier hors de la période de travail.",
+      timePrefs: "Horaires préférés et à éviter. L'AI en tient compte dans le planning.",
+      socialPrefs: "Qui travaille bien ensemble et qui séparer. Utile pour l'efficacité de l'équipe.",
     },
     schedule: {
       title: "Nom du planning",
@@ -561,6 +605,13 @@ const wizardCopy: Record<LanguageCode, {
       timePrefs: "Tiempo",
       socialPrefs: "Equipo",
     },
+    tabHints: {
+      roles: "Determines which shifts this employee can work. Assign at least one role.",
+      absences: "Sick days, vacations and other time off. Shifts won't be assigned on these dates.",
+      dates: "From when they're available and until when. Prevents scheduling outside the employment period.",
+      timePrefs: "Preferred and avoided shift times. AI factors these into the schedule.",
+      socialPrefs: "Who works well together and who to keep apart.",
+    },
     schedule: {
       title: "Nombre del horario",
       desc: "Nombre interno para encontrar este horario más tarde.",
@@ -620,6 +671,13 @@ const wizardCopy: Record<LanguageCode, {
       dates: "Assunzione / uscita",
       timePrefs: "Tempo",
       socialPrefs: "Team",
+    },
+    tabHints: {
+      roles: "Determines which shifts this employee can work. Assign at least one role.",
+      absences: "Sick days, vacations and other time off. Shifts won't be assigned on these dates.",
+      dates: "From when they're available and until when. Prevents scheduling outside the employment period.",
+      timePrefs: "Preferred and avoided shift times. AI factors these into the schedule.",
+      socialPrefs: "Who works well together and who to keep apart.",
     },
     schedule: {
       title: "Nome calendario",
@@ -681,6 +739,13 @@ const wizardCopy: Record<LanguageCode, {
       timePrefs: "Tempo",
       socialPrefs: "Equipe",
     },
+    tabHints: {
+      roles: "Determines which shifts this employee can work. Assign at least one role.",
+      absences: "Sick days, vacations and other time off. Shifts won't be assigned on these dates.",
+      dates: "From when they're available and until when. Prevents scheduling outside the employment period.",
+      timePrefs: "Preferred and avoided shift times. AI factors these into the schedule.",
+      socialPrefs: "Who works well together and who to keep apart.",
+    },
     schedule: {
       title: "Nome da escala",
       desc: "Nome interno para encontrar esta escala depois.",
@@ -740,6 +805,13 @@ const wizardCopy: Record<LanguageCode, {
       dates: "İşe giriş / çıkış",
       timePrefs: "Zaman",
       socialPrefs: "Ekip",
+    },
+    tabHints: {
+      roles: "Determines which shifts this employee can work. Assign at least one role.",
+      absences: "Sick days, vacations and other time off. Shifts won't be assigned on these dates.",
+      dates: "From when they're available and until when. Prevents scheduling outside the employment period.",
+      timePrefs: "Preferred and avoided shift times. AI factors these into the schedule.",
+      socialPrefs: "Who works well together and who to keep apart.",
     },
     schedule: {
       title: "Plan adı",
@@ -801,6 +873,13 @@ const wizardCopy: Record<LanguageCode, {
       timePrefs: "时间",
       socialPrefs: "团队",
     },
+    tabHints: {
+      roles: "Determines which shifts this employee can work. Assign at least one role.",
+      absences: "Sick days, vacations and other time off. Shifts won't be assigned on these dates.",
+      dates: "From when they're available and until when. Prevents scheduling outside the employment period.",
+      timePrefs: "Preferred and avoided shift times. AI factors these into the schedule.",
+      socialPrefs: "Who works well together and who to keep apart.",
+    },
     schedule: {
       title: "排班名称",
       desc: "内部名称，方便以后找到这份排班。",
@@ -860,6 +939,13 @@ const wizardCopy: Record<LanguageCode, {
       dates: "入社 / 退職",
       timePrefs: "時間",
       socialPrefs: "チーム",
+    },
+    tabHints: {
+      roles: "Determines which shifts this employee can work. Assign at least one role.",
+      absences: "Sick days, vacations and other time off. Shifts won't be assigned on these dates.",
+      dates: "From when they're available and until when. Prevents scheduling outside the employment period.",
+      timePrefs: "Preferred and avoided shift times. AI factors these into the schedule.",
+      socialPrefs: "Who works well together and who to keep apart.",
     },
     schedule: {
       title: "シフト名",
@@ -1610,8 +1696,6 @@ function RolesPanel({ emp, globalRoles, onToggleRole, onAddRole, dark, label, pC
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <PanelHeader emp={emp} label={label ?? pc.emptyTitle} dark={dark} />
-
       <div style={{ position: "relative", marginBottom: "10px" }}>
         <Search size={14} strokeWidth={1.8} style={{ position: "absolute", left: "13px", top: "50%", transform: "translateY(-50%)", color: focused ? "#a855f7" : tc.iconMuted, pointerEvents: "none", transition: "color 0.18s" }} />
         <input ref={searchRef} value={query} onChange={e => setQuery(e.target.value)}
@@ -1720,8 +1804,6 @@ function AbsencesPanel({ emp, onUpdate, dark, label, pc }: {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <PanelHeader emp={emp} label={label ?? pcp.addAbsence} dark={dark} />
-
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {emp.absences.length === 0 && !showForm && (
           <div style={{ textAlign: "center", padding: "16px 0 20px" }}>
@@ -1835,8 +1917,6 @@ function HireDatesPanel({ emp, onUpdate, dark, label, pc }: {
   };
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      <PanelHeader emp={emp} label={label ?? pcp.hireDate} dark={dark} />
-      <Desc text={pcp.hireDateDesc} dark={dark} />
       <div>
         <Label text={pcp.hireDate} dark={dark} />
         <StyledInput type="date" value={emp.hired} onChange={v => onUpdate(v, emp.fired)} dark={dark} style={{ width: "100%" }} />
@@ -1896,8 +1976,6 @@ function TimePrefsPanel({ emp, onUpdate, dark, label, pc }: {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <PanelHeader emp={emp} label={label ?? pcp.addPref} dark={dark} />
-
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {emp.timePrefs.length === 0 && !showForm && (
           <div style={{ textAlign: "center", padding: "16px 0 20px" }}>
@@ -1987,8 +2065,6 @@ function SocialPrefsPanel({ emp, allEmployees, onUpdate, dark, label, pc }: {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-      <PanelHeader emp={emp} label={label ?? pcp.together} dark={dark} />
-      <Desc text={pcp.socialDesc} dark={dark} />
 
       <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
         {others.length === 0 ? (
@@ -2019,6 +2095,108 @@ function SocialPrefsPanel({ emp, allEmployees, onUpdate, dark, label, pc }: {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── Context menu for employees ──────────────────────────────────────────────
+function EmpMenu({ dark, onRename, onDuplicate, onDelete }: {
+  dark: boolean; onRename: () => void; onDuplicate: () => void; onDelete: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const tc = colors(dark);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        dropRef.current && !dropRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) setOpen(false);
+    };
+    const keyHandler = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("keydown", keyHandler);
+    return () => { document.removeEventListener("mousedown", handler); document.removeEventListener("keydown", keyHandler); };
+  }, [open]);
+
+  const handleOpen = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 4, right: window.innerWidth - r.right });
+    }
+    setOpen(v => !v);
+  };
+
+  const dropBg = dark ? "#1a1730" : "#ffffff";
+  const hoverBg = dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)";
+  const itemBase: React.CSSProperties = {
+    display: "block", width: "100%", textAlign: "left",
+    padding: "3px 8px", background: "none", border: "none",
+    borderRadius: "5px", cursor: "pointer",
+    fontSize: "0.76rem", fontWeight: 450, lineHeight: "1.7",
+    fontFamily: "'DM Sans',sans-serif",
+    transition: "background 0.1s, color 0.1s", whiteSpace: "nowrap",
+    letterSpacing: "-0.01em",
+  };
+
+  const hoverItem = (e: React.MouseEvent<HTMLButtonElement>, color: string) => {
+    e.currentTarget.style.color = color;
+    e.currentTarget.style.background = hoverBg;
+  };
+  const leaveItem = (e: React.MouseEvent<HTMLButtonElement>, color: string) => {
+    e.currentTarget.style.color = color;
+    e.currentTarget.style.background = "none";
+  };
+
+  return (
+    <div style={{ flexShrink: 0 }}>
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        style={{
+          background: "none", border: "none", cursor: "pointer", padding: "4px 6px",
+          borderRadius: "6px", display: "flex", color: open ? tc.headline : tc.iconMuted,
+          transition: "color 0.15s",
+        }}
+        onMouseEnter={e => { e.currentTarget.style.color = tc.headline; }}
+        onMouseLeave={e => { if (!open) e.currentTarget.style.color = tc.iconMuted; }}
+      >
+        <MoreHorizontal size={15} strokeWidth={1.8} />
+      </button>
+
+      {open && typeof document !== "undefined" && ReactDOM.createPortal(
+        <div ref={dropRef} style={{
+          position: "fixed", top: pos.top, right: pos.right, zIndex: 9999,
+          background: dropBg,
+          borderRadius: "8px", padding: "3px",
+          boxShadow: dark
+            ? "0 20px 56px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.06)"
+            : "0 8px 32px rgba(0,0,0,0.13), 0 0 0 1px rgba(0,0,0,0.07)",
+          width: "max-content",
+        }}>
+          <button onClick={() => { onRename(); setOpen(false); }}
+            style={{ ...itemBase, color: tc.headline }}
+            onMouseEnter={e => hoverItem(e, dark ? "#fff" : "#0f0a1e")}
+            onMouseLeave={e => leaveItem(e, tc.headline)}
+          >Переименовать</button>
+          <button onClick={e => { e.stopPropagation(); onDuplicate(); setOpen(false); }}
+            style={{ ...itemBase, color: tc.headline }}
+            onMouseEnter={e => hoverItem(e, dark ? "#fff" : "#0f0a1e")}
+            onMouseLeave={e => leaveItem(e, tc.headline)}
+          >Дублировать</button>
+          <button onClick={e => { e.stopPropagation(); onDelete(); setOpen(false); }}
+            style={{ ...itemBase, color: dark ? "#f87171" : "#dc2626" }}
+            onMouseEnter={e => { e.currentTarget.style.color = dark ? "#fca5a5" : "#b91c1c"; e.currentTarget.style.background = dark ? "rgba(248,113,113,0.09)" : "rgba(220,38,38,0.06)"; }}
+            onMouseLeave={e => { e.currentTarget.style.color = dark ? "#f87171" : "#dc2626"; e.currentTarget.style.background = "none"; }}
+          >Удалить</button>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }
@@ -2063,22 +2241,44 @@ function EmployeeRow({ emp, dark, onDelete, onChipClick }: { emp: EmpData; dark:
 }
 
 // ─── Step 1: Team ────────────────────────────────────────────────────────────
-function EmpTeamRow({ emp, activeFeature, onChipClick, onDelete, dark, actionLabels }: {
+function EmpTeamRow({ emp, activeFeature, onChipClick, onDelete, onDuplicate, onRename, dark, actionLabels }: {
   emp: EmpData; activeFeature: string | null;
-  onChipClick: (key: string) => void; onDelete: () => void;
+  onChipClick: (key: string) => void; onDelete: () => void; onDuplicate: () => void; onRename: (name: string) => void;
   dark: boolean; actionLabels: Record<string, string>;
 }) {
   const tc = colors(dark);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameVal, setRenameVal] = useState(emp.name);
+  const renameInputRef = useRef<HTMLInputElement>(null);
+
+  const commitRename = () => {
+    const v = renameVal.trim();
+    if (v && v !== emp.name) onRename(v);
+    setIsRenaming(false);
+  };
+
+  useEffect(() => { if (isRenaming) renameInputRef.current?.focus(); }, [isRenaming]);
+
   return (
     <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.18 }}
       style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px", borderRadius: "10px", border: `1px solid ${tc.rowBorder}`, marginBottom: "6px" }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <Avatar name={emp.name} size={32} />
-        <span style={{ flex: 1, color: tc.headline, fontSize: "0.9rem", fontWeight: 500, letterSpacing: "-0.01em" }}>{emp.name}</span>
-        <button onClick={onDelete} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", color: tc.iconMuted, transition: "color 0.15s", flexShrink: 0 }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#f87171")} onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
-        ><Trash2 size={13} strokeWidth={1.8} /></button>
+        {isRenaming ? (
+          <input ref={renameInputRef} value={renameVal} onChange={e => setRenameVal(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") commitRename(); if (e.key === "Escape") setIsRenaming(false); }}
+            onBlur={commitRename}
+            style={{
+              flex: 1, background: tc.inputBg, border: `1.5px solid #a855f7`,
+              borderRadius: "8px", padding: "5px 9px", color: tc.headline,
+              fontSize: "0.9rem", fontFamily: "'DM Sans',sans-serif", outline: "none",
+            }}
+          />
+        ) : (
+          <span style={{ flex: 1, color: tc.headline, fontSize: "0.9rem", fontWeight: 500, letterSpacing: "-0.01em" }}>{emp.name}</span>
+        )}
+        <EmpMenu dark={dark} onRename={() => { setRenameVal(emp.name); setIsRenaming(true); }} onDuplicate={onDuplicate} onDelete={onDelete} />
       </div>
       <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
         {ACTIONS.map(({ key, icon: Icon }) => {
@@ -2104,9 +2304,11 @@ function EmpTeamRow({ emp, activeFeature, onChipClick, onDelete, dark, actionLab
   );
 }
 
-function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onAddRole, onRenameRole, onDeleteRole, onUpdateEmp, dark, copy, stepCopy, panelsCopy, panelCopy2 }: {
+function StepTeam({ employees, globalRoles, onAddEmployee, onInsertEmployee, onDeleteEmployee, onAddRole, onRenameRole, onDeleteRole, onUpdateEmp, dark, copy, stepCopy, panelsCopy, panelCopy2 }: {
   employees: EmpData[]; globalRoles: string[];
-  onAddEmployee: (name: string) => void; onDeleteEmployee: (id: number) => void;
+  onAddEmployee: (name: string) => void;
+  onInsertEmployee: (afterId: number, data: Omit<EmpData, "id">) => number;
+  onDeleteEmployee: (id: number) => void;
   onAddRole: (role: string) => void; onRenameRole: (from: string, to: string) => void;
   onDeleteRole: (role: string) => void;
   onUpdateEmp: (id: number, patch: Partial<EmpData>) => void;
@@ -2119,6 +2321,9 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
   const [roleFocused, setRoleFocused] = useState(false);
   const [editingRole, setEditingRole] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState("");
+  const [visitedTabs, setVisitedTabs] = useState<Record<number, Set<string>>>({});
+  const [renamingDesktopId, setRenamingDesktopId] = useState<number | null>(null);
+  const [renameDesktopVal, setRenameDesktopVal] = useState("");
   // Which employee+feature is shown in right panel. null = show global roles.
   const [selected, setSelected] = useState<{ empId: number; feature: string } | null>(null);
   const [draftEmp, setDraftEmp] = useState<EmpData | null>(null);
@@ -2198,6 +2403,18 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
   const switchTab = (feature: string) => {
     setSelected(prev => prev ? { ...prev, feature } : null);
   };
+
+  // Track visited tabs whenever the active tab changes
+  useEffect(() => {
+    if (!selected) return;
+    setVisitedTabs(prev => {
+      const existing = prev[selected.empId];
+      if (existing?.has(selected.feature)) return prev;
+      const next = new Set(existing ?? []);
+      next.add(selected.feature);
+      return { ...prev, [selected.empId]: next };
+    });
+  }, [selected?.empId, selected?.feature]);
 
   // Keep latest draftEmp in ref so cleanup can commit it on unmount
   const draftEmpRef = useRef<EmpData | null>(null);
@@ -2325,6 +2542,8 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
             activeFeature={selected?.empId === emp.id ? selected.feature : null}
             onChipClick={key => openFeature(emp.id, key)}
             onDelete={() => { if (selected?.empId === emp.id) { setSelected(null); setDraftEmp(null); } onDeleteEmployee(emp.id); }}
+            onDuplicate={() => onInsertEmployee(emp.id, { name: emp.name + " (2)", roles: [...emp.roles], absences: [...emp.absences], hired: emp.hired, fired: emp.fired, timePrefs: [...emp.timePrefs], socialPrefs: [...emp.socialPrefs] })}
+            onRename={name => onUpdateEmp(emp.id, { name })}
             dark={dark} actionLabels={actionLabels}
           />
         ))}
@@ -2392,6 +2611,24 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
                     <div style={{ width: "36px", height: "4px", borderRadius: "2px", background: tc.faint, marginBottom: "12px" }} />
                     <p style={{ margin: 0, color: tc.headline, fontWeight: 600, fontSize: "0.9rem", letterSpacing: "-0.01em", alignSelf: "flex-start" }}>{sheetTitle}</p>
                   </div>
+                  {selected && copy.tabHints[selected.feature as keyof typeof copy.tabHints] && (
+                    <div style={{ padding: "0 20px 4px", flexShrink: 0 }}>
+                      <div style={{
+                        borderLeft: `2px solid ${dark ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.35)"}`,
+                        background: dark ? "rgba(168,85,247,0.06)" : "rgba(168,85,247,0.05)",
+                        borderRadius: "0 6px 6px 0",
+                        padding: "6px 10px",
+                      }}>
+                        <span style={{
+                          color: dark ? "rgba(196,181,253,0.75)" : "rgba(91,33,182,0.65)",
+                          fontSize: "0.72rem", lineHeight: 1.55,
+                          fontFamily: "'DM Sans',sans-serif",
+                        }}>
+                          {copy.tabHints[selected.feature as keyof typeof copy.tabHints]}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                   {/* Content — overscrollBehavior contains native scroll, no pull-to-refresh */}
                   <div style={{ flex: 1, minHeight: 0, padding: "12px 20px 24px", display: "flex", flexDirection: "column", overscrollBehavior: "contain" }}>
                     {selected ? renderFeaturePanel() : renderRolesPanel()}
@@ -2405,13 +2642,7 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
     );
   }
 
-  const DESKTOP_TABS = [
-    { key: "roles",       label: "Роль" },
-    { key: "dates",       label: "Расписание" },
-    { key: "timePrefs",   label: "Пожелания" },
-    { key: "absences",    label: "Отпуск" },
-    { key: "socialPrefs", label: "Отгулы" },
-  ];
+  const DESKTOP_TABS = ACTIONS.map(({ key, icon }) => ({ key, icon, label: actionLabels[key] ?? key }));
 
   return (
     <div style={{ display: "flex", gap: "20px", height: "100%", minHeight: 0 }}>
@@ -2433,10 +2664,10 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
               return (
                 <motion.div key={emp.id}
                   initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.18 }}
-                  onClick={() => selectEmployee(emp.id)}
+                  onClick={() => { if (renamingDesktopId !== emp.id) selectEmployee(emp.id); }}
                   style={{
                     display: "flex", alignItems: "center", gap: "10px",
-                    padding: "10px", borderRadius: "10px",
+                    padding: "10px", borderRadius: "10px", position: "relative",
                     border: `1px solid ${isSelected ? (dark ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.35)") : tc.rowBorder}`,
                     marginBottom: "6px", cursor: "pointer",
                     background: isSelected ? (dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.06)") : "transparent",
@@ -2445,16 +2676,42 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
                 >
                   <Avatar name={displayEmp.name} size={30} />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ color: tc.headline, fontSize: "0.88rem", fontWeight: 500, display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayEmp.name}</span>
-                    {displayEmp.roles.length > 0 && (
-                      <span style={{ color: tc.sub, fontSize: "0.72rem", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayEmp.roles.join(", ")}</span>
+                    {renamingDesktopId === emp.id ? (
+                      <input
+                        value={renameDesktopVal}
+                        onChange={e => setRenameDesktopVal(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") { const v = renameDesktopVal.trim(); if (v) onUpdateEmp(emp.id, { name: v }); setRenamingDesktopId(null); }
+                          if (e.key === "Escape") setRenamingDesktopId(null);
+                        }}
+                        onBlur={() => { const v = renameDesktopVal.trim(); if (v) onUpdateEmp(emp.id, { name: v }); setRenamingDesktopId(null); }}
+                        onClick={e => e.stopPropagation()}
+                        autoFocus
+                        style={{
+                          width: "100%", background: tc.inputBg, border: `1.5px solid #a855f7`,
+                          borderRadius: "7px", padding: "4px 8px", color: tc.headline,
+                          fontSize: "0.88rem", fontFamily: "'DM Sans',sans-serif", outline: "none", boxSizing: "border-box",
+                        }}
+                      />
+                    ) : (
+                      <>
+                        <span style={{ color: tc.headline, fontSize: "0.88rem", fontWeight: 500, display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayEmp.name}</span>
+                        {displayEmp.roles.length > 0 && (
+                          <span style={{ color: tc.sub, fontSize: "0.72rem", display: "block", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{displayEmp.roles.join(", ")}</span>
+                        )}
+                      </>
                     )}
                   </div>
-                  <button
-                    onClick={e => { e.stopPropagation(); if (selected?.empId === emp.id) { setSelected(null); setDraftEmp(null); } onDeleteEmployee(emp.id); }}
-                    style={{ background: "none", border: "none", cursor: "pointer", padding: "4px", borderRadius: "6px", display: "flex", color: tc.iconMuted, transition: "color 0.15s", flexShrink: 0 }}
-                    onMouseEnter={e => (e.currentTarget.style.color = "#f87171")} onMouseLeave={e => (e.currentTarget.style.color = tc.iconMuted)}
-                  ><Trash2 size={13} strokeWidth={1.8} /></button>
+                  <div onClick={e => e.stopPropagation()}>
+                    <EmpMenu dark={dark}
+                      onRename={() => { setRenameDesktopVal(displayEmp.name); setRenamingDesktopId(emp.id); }}
+                      onDuplicate={() => {
+                        const newId = onInsertEmployee(emp.id, { name: emp.name + " (2)", roles: [...emp.roles], absences: [...emp.absences], hired: emp.hired, fired: emp.fired, timePrefs: [...emp.timePrefs], socialPrefs: [...emp.socialPrefs] });
+                        setTimeout(() => { setRenamingDesktopId(newId); setRenameDesktopVal(emp.name + " (2)"); }, 50);
+                      }}
+                      onDelete={() => { if (selected?.empId === emp.id) { setSelected(null); setDraftEmp(null); } onDeleteEmployee(emp.id); }}
+                    />
+                  </div>
                 </motion.div>
               );
             })}
@@ -2475,22 +2732,63 @@ function StepTeam({ employees, globalRoles, onAddEmployee, onDeleteEmployee, onA
         ) : (
           <>
             {/* Tab bar */}
-            <div style={{ display: "flex", gap: "5px", marginBottom: "14px", flexShrink: 0, flexWrap: "wrap" }}>
-              {DESKTOP_TABS.map(tab => {
-                const isActive = selected.feature === tab.key;
+            <div style={{ display: "flex", borderBottom: `1px solid ${tc.rowBorder}`, flexShrink: 0 }}>
+              {DESKTOP_TABS.map(({ key, icon: Icon, label }) => {
+                const isActive = selected.feature === key;
+                const hasDat = hasData(activeEmp, key);
+                const wasVisited = visitedTabs[selected.empId]?.has(key) ?? false;
+                const indicator = !wasVisited ? "●" : null;
+                const indicatorColor = dark ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.2)";
                 return (
-                  <button key={tab.key} onClick={() => switchTab(tab.key)} style={{
-                    padding: "6px 14px", borderRadius: "99px",
-                    border: `1px solid ${isActive ? "transparent" : tc.inputBorder}`,
-                    background: isActive ? "linear-gradient(135deg,#a855f7,#ec4899)" : tc.chipBg,
-                    color: isActive ? "#fff" : tc.sub,
-                    fontSize: "0.8rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif",
-                    cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
-                    boxShadow: isActive ? "0 2px 10px rgba(168,85,247,0.3)" : "none",
-                  }}>{tab.label}</button>
+                  <button key={key} onClick={() => switchTab(key)}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.color = dark ? "#e2dbf8" : "#5b21b6"; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.color = tc.sub; }}
+                    style={{
+                      flex: 1,
+                      display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "5px",
+                      padding: "12px 6px 11px",
+                      border: "none",
+                      borderBottom: `2.5px solid ${isActive ? "#a855f7" : "transparent"}`,
+                      background: "transparent",
+                      color: isActive ? (dark ? "#c4b5fd" : "#7c3aed") : tc.sub,
+                      cursor: "pointer", transition: "color 0.15s, border-color 0.15s",
+                      fontFamily: "'DM Sans',sans-serif",
+                      marginBottom: "-1px", whiteSpace: "nowrap",
+                    }}>
+                    <Icon size={13} strokeWidth={isActive ? 2.2 : 1.8} />
+                    <span style={{ fontSize: "0.8rem", fontWeight: isActive ? 600 : 400 }}>{label}</span>
+                    {indicator && (
+                      <span style={{ fontSize: "0.6rem", lineHeight: 1, color: indicatorColor, flexShrink: 0 }}>
+                        {indicator}
+                      </span>
+                    )}
+                  </button>
                 );
               })}
             </div>
+            {/* Tab hint */}
+            <AnimatePresence mode="wait">
+              <motion.div key={selected.feature}
+                initial={{ opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                transition={{ duration: 0.14 }}
+                style={{ padding: "10px 0 6px", flexShrink: 0 }}
+              >
+                <div style={{
+                  borderLeft: `2px solid ${dark ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.35)"}`,
+                  background: dark ? "rgba(168,85,247,0.06)" : "rgba(168,85,247,0.05)",
+                  borderRadius: "0 6px 6px 0",
+                  padding: "8px 12px",
+                }}>
+                  <span style={{
+                    color: dark ? "rgba(196,181,253,0.75)" : "rgba(91,33,182,0.65)",
+                    fontSize: "0.78rem", lineHeight: 1.6,
+                    fontFamily: "'DM Sans',sans-serif", letterSpacing: "0.005em",
+                  }}>
+                    {copy.tabHints[selected.feature as keyof typeof copy.tabHints]}
+                  </span>
+                </div>
+              </motion.div>
+            </AnimatePresence>
             {/* Panel content */}
             <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
               <AnimatePresence mode="wait">
@@ -2932,14 +3230,17 @@ function StepEmployeeConfig({ employees, globalRoles, onAddRole, onUpdateEmp, da
 
 const TOTAL_STEPS = 4;
 
-interface WizardProps { dark: boolean; language: LanguageCode; onBack: () => void; onSignUp?: () => void; }
+interface WizardProps {
+  dark: boolean; language: LanguageCode; onBack: () => void; onSignUp?: () => void;
+  theme?: ThemeMode; onThemeChange?: (t: ThemeMode) => void; onLanguageChange?: (l: LanguageCode) => void;
+}
 
 const DRAFT_KEY = "shifty-wizard-draft";
 function readDraft(): Record<string, unknown> {
   try { return JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null") ?? {}; } catch { return {}; }
 }
 
-export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
+export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange, onLanguageChange }: WizardProps) {
   const [step, setStep]           = useState<number>(() => { const d = readDraft(); return typeof d.step === "number" ? d.step : 1; });
   const [scheduleName, setScheduleName] = useState<string>(() => (readDraft().scheduleName as string) ?? "");
   const [employees, setEmployees] = useState<EmpData[]>(() => (readDraft().employees as EmpData[]) ?? []);
@@ -2954,6 +3255,13 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
   const [generationPhase, setGenerationPhase] = useState<"loading" | "done">("loading");
   const [logOpen, setLogOpen] = useState(false);
   const [continueAttempted, setContinueAttempted] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(() => window.innerWidth >= 768);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const handler = (e: MediaQueryListEvent) => setIsDesktop(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const copy = wizardCopy[language] ?? wizardCopy.ru;
   const stepCopy = wizardStepCopy[language] ?? wizardStepCopy.ru;
@@ -2967,10 +3275,15 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
     catch {}
   }, [step, employees, globalRoles, scheduleName, step3Data, step5Data]);
 
+  const loadingPhrases = ["Составляем расписание", "Учитываем пожелания", "Подбираем смены", "Распределяем роли"];
+  const [phraseIdx, setPhraseIdx] = useState(0);
+
   useEffect(() => {
     if (!generationOpen || generationPhase !== "loading") return;
-    const t = setTimeout(() => setGenerationPhase("done"), 5000);
-    return () => clearTimeout(t);
+    setPhraseIdx(0);
+    const iv = setInterval(() => setPhraseIdx(i => (i + 1) % loadingPhrases.length), 1900);
+    const t = setTimeout(() => setGenerationPhase("done"), 8000);
+    return () => { clearTimeout(t); clearInterval(iv); };
   }, [generationOpen, generationPhase]);
 
   useEffect(() => {
@@ -2983,6 +3296,18 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
   const addEmployee = (name: string) => {
     setEmployees(p => [...p, { id: nextId, name, roles: [], absences: [], hired: "", fired: "", timePrefs: [], socialPrefs: [] }]);
     setNextId(n => n + 1);
+  };
+
+  const insertEmployee = (afterId: number, data: Omit<EmpData, "id">): number => {
+    const id = nextId;
+    setEmployees(p => {
+      const idx = p.findIndex(e => e.id === afterId);
+      const newEmp = { id, ...data };
+      if (idx === -1) return [...p, newEmp];
+      return [...p.slice(0, idx + 1), newEmp, ...p.slice(idx + 1)];
+    });
+    setNextId(n => n + 1);
+    return id;
   };
 
   const addRole = (role: string) => {
@@ -3019,106 +3344,211 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
   const rightBtnLabel = step === TOTAL_STEPS ? copy.generate : copy.continue;
 
   return (
-    <div style={{ minHeight: "100dvh", background: bg, fontFamily: "'DM Sans',sans-serif", display: "flex", flexDirection: "column" }}>
+    <div style={{ height: isDesktop ? "100dvh" : undefined, minHeight: isDesktop ? undefined : "100dvh", background: bg, fontFamily: "'DM Sans',sans-serif", display: "flex", flexDirection: "column", overflow: isDesktop ? "hidden" : undefined, boxSizing: isDesktop ? "border-box" : undefined, paddingTop: isDesktop ? "clamp(20px, 3vh, 40px)" : undefined, paddingBottom: isDesktop ? "clamp(20px, 3vh, 40px)" : undefined }}>
       {/* Glow */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", background: "radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.13), rgba(236,72,153,0.05) 42%, transparent 72%)", zIndex: 0 }} />
 
-      {/* Header */}
-      <header style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px clamp(16px, 5vw, 48px)" }}>
-        <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: "6px", border: "none", background: "transparent", color: stepLabel, cursor: "pointer", fontFamily: "inherit", fontSize: "0.88rem" }}>
-          <House size={15} strokeWidth={1.8} />
-        </button>
-        <span style={{ background: "linear-gradient(120deg,#c084fc,#ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: "1rem", fontWeight: 600, letterSpacing: "-0.02em" }}>Shifty</span>
-      </header>
-
-      {/* Progress + step title */}
-      <div style={{ position: "relative", zIndex: 10, padding: "0 clamp(16px, 5vw, 48px) 0" }}>
-        <ProgressBar step={step} total={TOTAL_STEPS} stepNames={stepTitles} onStepClick={setStep} />
-        <AnimatePresence mode="wait">
-          <motion.h2 key={step} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.2 }}
-            style={{ margin: "14px 0 16px", fontSize: "clamp(1.15rem, 3vw, 1.45rem)", fontWeight: 650, letterSpacing: "-0.025em", color: dark ? "#f0ecff" : "#0f0a1e" }}
-          >{stepTitles[step - 1]}</motion.h2>
-        </AnimatePresence>
-      </div>
-
-      {/* Content */}
-      <main style={{ position: "relative", zIndex: 10, flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "0 clamp(16px, 5vw, 48px)", overflow: "hidden" }}>
-        <AnimatePresence mode="wait">
-          <motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", maxWidth: step === 1 ? "1040px" : "700px", width: "100%", margin: "0 auto", alignSelf: "center" }}
-          >
-            {step === 1 && (
-              <StepTeam
-                employees={employees} globalRoles={globalRoles}
-                onAddEmployee={addEmployee} onDeleteEmployee={id => setEmployees(p => p.filter(e => e.id !== id))}
-                onAddRole={addRole} onRenameRole={renameRole} onDeleteRole={deleteRole}
-                onUpdateEmp={(id, patch) => setEmployees(p => p.map(e => e.id !== id ? e : { ...e, ...patch }))}
-                dark={dark} copy={copy} stepCopy={stepCopy}
-                panelsCopy={rolePanelCopy[language] ?? rolePanelCopy.en}
-                panelCopy2={panelCopyRec[language] ?? panelCopyRec.en}
-              />
-            )}
-            {step === 2 && <StepThree data={step3Data} onChange={setStep3Data} dark={dark} language={language} />}
-            {step === 3 && <StepFour data={step3Data} onChange={setStep3Data} globalRoles={globalRoles} onGoToStep={setStep} dark={dark} language={language} />}
-            {step === 4 && <StepFive data={step5Data} onChange={setStep5Data} scheduleName={scheduleName} onScheduleNameChange={setScheduleName} scheduleCopy={copy.schedule} dark={dark} />}
-          </motion.div>
-        </AnimatePresence>
-      </main>
-
-      {/* Footer */}
-      <footer style={{ position: "relative", zIndex: 10, padding: "16px clamp(16px, 5vw, 48px) clamp(24px, 5vw, 40px)" }}>
-        {showValidationMessage && (
-          <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "12px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)", color: "#f87171", fontSize: "0.78rem", lineHeight: 1.45 }}>
-            <AlertCircle size={14} strokeWidth={1.9} style={{ flex: "0 0 auto", marginTop: "1px" }} />
-            <span>{validationMessage}</span>
-          </div>
-        )}
-        {showRoleConflicts && roleConflicts.map((c, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "8px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)" }}>
-            <AlertCircle size={14} strokeWidth={1.9} style={{ color: "#f87171", flex: "0 0 auto", marginTop: "2px" }} />
-            <div style={{ flex: 1 }}>
-              <p style={{ color: "#f87171", fontSize: "0.78rem", margin: "0 0 6px", lineHeight: 1.45 }}>
-                Смена {c.from}–{c.to} требует роль «{c.role}», но ни один сотрудник не имеет этой роли. Назначьте роль сотруднику или уберите ограничение со смены.
-              </p>
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                <button onClick={() => { setContinueAttempted(false); setStep(1); }}
-                  style={{ padding: "4px 10px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.73rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}>
-                  Перейти к сотрудникам
-                </button>
-                <button onClick={() => { setContinueAttempted(false); setStep(3); }}
-                  style={{ padding: "4px 10px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.73rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}>
-                  Перейти к сменам
-                </button>
+      {isDesktop ? (
+        <>
+          {/* Desktop top bar */}
+          <div style={{ position: "relative", zIndex: 100, display: "flex", alignItems: "flex-start", justifyContent: "space-between", width: "calc(100% - 64px)", maxWidth: "1000px", margin: "0 auto", padding: "28px 0 20px", flexShrink: 0 }}>
+            <div>
+              <AnimatePresence mode="wait">
+                <motion.h1 key={step} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.18 }}
+                  style={{ margin: 0, fontSize: "1.55rem", fontWeight: 700, letterSpacing: "-0.03em", color: dark ? "#f0ecff" : "#0f0a1e" }}
+                >{stepTitles[step - 1]}</motion.h1>
+              </AnimatePresence>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "6px", color: stepLabel, fontSize: "0.92rem" }}>
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ transform: "rotate(-90deg)", flexShrink: 0 }}>
+                  <circle cx="10" cy="10" r="8" stroke={dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"} strokeWidth="2.5" />
+                  <circle cx="10" cy="10" r="8"
+                    stroke={dark ? "#c4b5fd" : "#7c3aed"}
+                    strokeWidth="2.5" strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 8}`}
+                    strokeDashoffset={`${2 * Math.PI * 8 * (1 - step / TOTAL_STEPS)}`}
+                    style={{ transition: "stroke-dashoffset 0.35s ease" }}
+                  />
+                </svg>
+                <span>Шаг {step}/{TOTAL_STEPS}</span>
               </div>
             </div>
+            {onThemeChange && onLanguageChange && (
+              <NavMenu dark={dark} theme={theme ?? "system"} language={language}
+                onThemeChange={onThemeChange} onLanguageChange={onLanguageChange}
+                onLoginClick={onSignUp ?? onBack}
+              />
+            )}
           </div>
-        ))}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <a onClick={() => step > 1 ? setStep(s => s - 1) : onBack()}
-            style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s", visibility: step > 1 ? "visible" : "hidden" }}
-            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.7")}
-            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-          >
-            <ChevronLeft size={14} strokeWidth={2.5} />{stepTitles[step - 2]}
-          </a>
-          <button
-            onClick={() => {
-              if (validationMessage) { setContinueAttempted(true); return; }
-              if (step === TOTAL_STEPS) {
-                const conflicts = hasRoleConflicts(employees, step3Data.configs);
-                if (conflicts.length > 0) { setContinueAttempted(true); return; }
-                setGenerationPhase("loading"); setGenerationOpen(true); return;
-              }
-              setStep(s => s + 1);
-            }}
-            style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "13px 22px", borderRadius: "10px", background: "linear-gradient(135deg,#a855f7 0%,#ec4899 100%)", color: "#fff", fontSize: "0.95rem", fontWeight: 500, border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", boxShadow: "0 4px 20px rgba(168,85,247,0.3)", transition: "all 0.18s ease", whiteSpace: "nowrap" }}
-            onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.07)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(168,85,247,0.45)"; }}
-            onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(168,85,247,0.3)"; }}
-          >{rightBtnLabel}</button>
-        </div>
-      </footer>
+
+          {/* Desktop card */}
+          <div style={{ position: "relative", zIndex: 10, flex: 1, minHeight: 0, width: "calc(100% - 64px)", maxWidth: "1000px", margin: "0 auto", border: `1px solid ${border}`, borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column", background: dark ? "#0c0a1a" : "#ffffff" }}>
+            <AnimatePresence mode="wait">
+              <motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column" }}
+              >
+                {step === 1 ? (
+                  <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", overflow: "hidden", padding: "28px clamp(16px, 3vw, 32px) 0", width: "100%" }}>
+                    <StepTeam
+                      employees={employees} globalRoles={globalRoles}
+                      onAddEmployee={addEmployee} onInsertEmployee={insertEmployee} onDeleteEmployee={id => setEmployees(p => p.filter(e => e.id !== id))}
+                      onAddRole={addRole} onRenameRole={renameRole} onDeleteRole={deleteRole}
+                      onUpdateEmp={(id, patch) => setEmployees(p => p.map(e => e.id !== id ? e : { ...e, ...patch }))}
+                      dark={dark} copy={copy} stepCopy={stepCopy}
+                      panelsCopy={rolePanelCopy[language] ?? rolePanelCopy.en}
+                      panelCopy2={panelCopyRec[language] ?? panelCopyRec.en}
+                    />
+                  </div>
+                ) : (
+                  <div style={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+                    <div style={{ padding: "28px clamp(20px, 4vw, 48px) 36px", maxWidth: "720px", width: "100%", margin: "0 auto", boxSizing: "border-box" }}>
+                      {step === 2 && <StepThree data={step3Data} onChange={setStep3Data} dark={dark} language={language} />}
+                      {step === 3 && <StepFour data={step3Data} onChange={setStep3Data} globalRoles={globalRoles} onGoToStep={setStep} dark={dark} language={language} />}
+                      {step === 4 && <StepFive data={step5Data} onChange={setStep5Data} scheduleName={scheduleName} onScheduleNameChange={setScheduleName} scheduleCopy={copy.schedule} dark={dark} />}
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Desktop footer */}
+          <div style={{ position: "relative", zIndex: 10, width: "calc(100% - 64px)", maxWidth: "1000px", margin: "0 auto", padding: "20px 0 30px", flexShrink: 0 }}>
+            {showValidationMessage && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "10px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)", color: "#f87171", fontSize: "0.78rem", lineHeight: 1.45 }}>
+                <AlertCircle size={14} strokeWidth={1.9} style={{ flex: "0 0 auto", marginTop: "1px" }} />
+                <span>{validationMessage}</span>
+              </div>
+            )}
+            {showRoleConflicts && roleConflicts.map((c, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "8px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)" }}>
+                <AlertCircle size={14} strokeWidth={1.9} style={{ color: "#f87171", flex: "0 0 auto", marginTop: "2px" }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: "#f87171", fontSize: "0.78rem", margin: "0 0 6px", lineHeight: 1.45 }}>
+                    Смена {c.from}–{c.to} требует роль «{c.role}», но ни один сотрудник не имеет этой роли. Назначьте роль сотруднику или уберите ограничение со смены.
+                  </p>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    <button onClick={() => { setContinueAttempted(false); setStep(1); }} style={{ padding: "4px 10px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.73rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}>Перейти к сотрудникам</button>
+                    <button onClick={() => { setContinueAttempted(false); setStep(3); }} style={{ padding: "4px 10px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.73rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}>Перейти к сменам</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <a onClick={() => step > 1 ? setStep(s => s - 1) : onBack()}
+                style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s", visibility: step > 1 ? "visible" : "hidden" }}
+                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.7")}
+                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+              ><ChevronLeft size={14} strokeWidth={2.5} />{stepTitles[step - 2]}</a>
+              <button
+                onClick={() => {
+                  if (validationMessage) { setContinueAttempted(true); return; }
+                  if (step === TOTAL_STEPS) {
+                    const conflicts = hasRoleConflicts(employees, step3Data.configs);
+                    if (conflicts.length > 0) { setContinueAttempted(true); return; }
+                    setGenerationPhase("loading"); setGenerationOpen(true); return;
+                  }
+                  setStep(s => s + 1);
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "13px 22px", borderRadius: "10px", background: "linear-gradient(135deg,#a855f7 0%,#ec4899 100%)", color: "#fff", fontSize: "0.95rem", fontWeight: 500, border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", boxShadow: "0 4px 20px rgba(168,85,247,0.3)", transition: "all 0.18s ease", whiteSpace: "nowrap" }}
+                onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.07)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(168,85,247,0.45)"; }}
+                onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(168,85,247,0.3)"; }}
+              >{rightBtnLabel}</button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Mobile header */}
+          <header style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px clamp(16px, 5vw, 48px)" }}>
+            <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: "6px", border: "none", background: "transparent", color: stepLabel, cursor: "pointer", fontFamily: "inherit", fontSize: "0.88rem" }}>
+              <House size={15} strokeWidth={1.8} />
+            </button>
+            <span style={{ background: "linear-gradient(120deg,#c084fc,#ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: "1rem", fontWeight: 600, letterSpacing: "-0.02em" }}>Shifty</span>
+          </header>
+
+          {/* Mobile progress + step title */}
+          <div style={{ position: "relative", zIndex: 10, padding: "0 clamp(16px, 5vw, 48px) 0" }}>
+            <ProgressBar step={step} total={TOTAL_STEPS} stepNames={stepTitles} onStepClick={setStep} />
+            <AnimatePresence mode="wait">
+              <motion.h2 key={step} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2 }}
+                style={{ margin: "14px 0 16px", fontSize: "clamp(1.15rem, 3vw, 1.45rem)", fontWeight: 650, letterSpacing: "-0.025em", color: dark ? "#f0ecff" : "#0f0a1e" }}
+              >{stepTitles[step - 1]}</motion.h2>
+            </AnimatePresence>
+          </div>
+
+          {/* Mobile content */}
+          <main style={{ position: "relative", zIndex: 10, flex: 1, minHeight: 0, display: "flex", flexDirection: "column", padding: "0 clamp(16px, 5vw, 48px)", overflow: "hidden" }}>
+            <AnimatePresence mode="wait">
+              <motion.div key={step} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column", maxWidth: step === 1 ? "1040px" : "700px", width: "100%", margin: "0 auto", alignSelf: "center" }}
+              >
+                {step === 1 && (
+                  <StepTeam
+                    employees={employees} globalRoles={globalRoles}
+                    onAddEmployee={addEmployee} onInsertEmployee={insertEmployee} onDeleteEmployee={id => setEmployees(p => p.filter(e => e.id !== id))}
+                    onAddRole={addRole} onRenameRole={renameRole} onDeleteRole={deleteRole}
+                    onUpdateEmp={(id, patch) => setEmployees(p => p.map(e => e.id !== id ? e : { ...e, ...patch }))}
+                    dark={dark} copy={copy} stepCopy={stepCopy}
+                    panelsCopy={rolePanelCopy[language] ?? rolePanelCopy.en}
+                    panelCopy2={panelCopyRec[language] ?? panelCopyRec.en}
+                  />
+                )}
+                {step === 2 && <StepThree data={step3Data} onChange={setStep3Data} dark={dark} language={language} />}
+                {step === 3 && <StepFour data={step3Data} onChange={setStep3Data} globalRoles={globalRoles} onGoToStep={setStep} dark={dark} language={language} />}
+                {step === 4 && <StepFive data={step5Data} onChange={setStep5Data} scheduleName={scheduleName} onScheduleNameChange={setScheduleName} scheduleCopy={copy.schedule} dark={dark} />}
+              </motion.div>
+            </AnimatePresence>
+          </main>
+
+          {/* Mobile footer */}
+          <footer style={{ position: "relative", zIndex: 10, padding: "16px clamp(16px, 5vw, 48px) clamp(24px, 5vw, 40px)" }}>
+            {showValidationMessage && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "12px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)", color: "#f87171", fontSize: "0.78rem", lineHeight: 1.45 }}>
+                <AlertCircle size={14} strokeWidth={1.9} style={{ flex: "0 0 auto", marginTop: "1px" }} />
+                <span>{validationMessage}</span>
+              </div>
+            )}
+            {showRoleConflicts && roleConflicts.map((c, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "8px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)" }}>
+                <AlertCircle size={14} strokeWidth={1.9} style={{ color: "#f87171", flex: "0 0 auto", marginTop: "2px" }} />
+                <div style={{ flex: 1 }}>
+                  <p style={{ color: "#f87171", fontSize: "0.78rem", margin: "0 0 6px", lineHeight: 1.45 }}>
+                    Смена {c.from}–{c.to} требует роль «{c.role}», но ни один сотрудник не имеет этой роли. Назначьте роль сотруднику или уберите ограничение со смены.
+                  </p>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                    <button onClick={() => { setContinueAttempted(false); setStep(1); }} style={{ padding: "4px 10px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.73rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}>Перейти к сотрудникам</button>
+                    <button onClick={() => { setContinueAttempted(false); setStep(3); }} style={{ padding: "4px 10px", borderRadius: "99px", border: `1px solid ${dark ? "rgba(168,85,247,0.3)" : "rgba(168,85,247,0.25)"}`, background: dark ? "rgba(168,85,247,0.1)" : "rgba(168,85,247,0.07)", color: dark ? "#c4b5fd" : "#7c3aed", fontSize: "0.73rem", fontWeight: 500, fontFamily: "'DM Sans',sans-serif", cursor: "pointer" }}>Перейти к сменам</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <a onClick={() => step > 1 ? setStep(s => s - 1) : onBack()}
+                style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s", visibility: step > 1 ? "visible" : "hidden" }}
+                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.7")}
+                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+              ><ChevronLeft size={14} strokeWidth={2.5} />{stepTitles[step - 2]}</a>
+              <button
+                onClick={() => {
+                  if (validationMessage) { setContinueAttempted(true); return; }
+                  if (step === TOTAL_STEPS) {
+                    const conflicts = hasRoleConflicts(employees, step3Data.configs);
+                    if (conflicts.length > 0) { setContinueAttempted(true); return; }
+                    setGenerationPhase("loading"); setGenerationOpen(true); return;
+                  }
+                  setStep(s => s + 1);
+                }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "13px 22px", borderRadius: "10px", background: "linear-gradient(135deg,#a855f7 0%,#ec4899 100%)", color: "#fff", fontSize: "0.95rem", fontWeight: 500, border: "none", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", boxShadow: "0 4px 20px rgba(168,85,247,0.3)", transition: "all 0.18s ease", whiteSpace: "nowrap" }}
+                onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.07)"; e.currentTarget.style.boxShadow = "0 6px 28px rgba(168,85,247,0.45)"; }}
+                onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(168,85,247,0.3)"; }}
+              >{rightBtnLabel}</button>
+            </div>
+          </footer>
+        </>
+      )}
 
       {/* Generation dialog */}
       <AnimatePresence>
@@ -3150,8 +3580,12 @@ export function Wizard({ dark, language, onBack, onSignUp }: WizardProps) {
                         <div style={{ width: 26, height: 26, borderRadius: "8px", background: "linear-gradient(135deg,#a855f7,#ec4899)" }} />
                       </div>
                     </div>
-                    <p style={{ color: dark ? "#f0ecff" : "#0f0a1e", fontSize: "1.1rem", fontWeight: 650, margin: "0 0 8px", letterSpacing: "-0.02em" }}>{copy.generationTitle}</p>
-                    <p style={{ color: stepLabel, fontSize: "0.82rem", lineHeight: 1.65, margin: "0 0 20px" }}>{copy.generationText}</p>
+                    <AnimatePresence mode="wait">
+                      <motion.p key={phraseIdx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.22 }}
+                        style={{ color: dark ? "#f0ecff" : "#0f0a1e", fontSize: "1.1rem", fontWeight: 650, margin: "0 0 20px", letterSpacing: "-0.02em" }}
+                      >{loadingPhrases[phraseIdx]}</motion.p>
+                    </AnimatePresence>
                     {/* Bouncing dots */}
                     <div style={{ display: "flex", gap: "7px", justifyContent: "center" }}>
                       {[0, 0.18, 0.36].map((delay, i) => (

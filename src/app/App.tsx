@@ -162,7 +162,7 @@ export default function App() {
   }
 
   if (wizardOpen) {
-    return <Wizard dark={dark} language={language} onBack={() => setWizardOpen(false)} onSignUp={() => { setWizardOpen(false); setAuthOpen(true); }} />;
+    return <Wizard dark={dark} language={language} onBack={() => setWizardOpen(false)} onSignUp={() => { setWizardOpen(false); setAuthOpen(true); }} theme={themeMode} onThemeChange={setThemeMode} onLanguageChange={setLanguage} />;
   }
 
   return (
