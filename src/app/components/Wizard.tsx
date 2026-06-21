@@ -3344,7 +3344,7 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
   const rightBtnLabel = step === TOTAL_STEPS ? copy.generate : copy.continue;
 
   return (
-    <div style={{ height: isDesktop ? "100dvh" : undefined, minHeight: isDesktop ? undefined : "100dvh", background: bg, fontFamily: "'DM Sans',sans-serif", display: "flex", flexDirection: "column", overflow: isDesktop ? "hidden" : undefined, boxSizing: isDesktop ? "border-box" : undefined, paddingTop: isDesktop ? "clamp(20px, 3vh, 40px)" : undefined, paddingBottom: isDesktop ? "clamp(20px, 3vh, 40px)" : undefined }}>
+    <div style={{ height: "100dvh", background: bg, fontFamily: "'DM Sans',sans-serif", display: "flex", flexDirection: "column", overflow: "hidden", boxSizing: "border-box", paddingTop: isDesktop ? "clamp(20px, 3vh, 40px)" : undefined, paddingBottom: isDesktop ? "clamp(20px, 3vh, 40px)" : undefined }}>
       {/* Glow */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", background: "radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.13), rgba(236,72,153,0.05) 42%, transparent 72%)", zIndex: 0 }} />
 
@@ -3504,7 +3504,7 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
           </main>
 
           {/* Mobile footer */}
-          <footer style={{ position: "relative", zIndex: 10, padding: "16px clamp(16px, 5vw, 48px) clamp(24px, 5vw, 40px)" }}>
+          <footer style={{ position: "relative", zIndex: 10, flexShrink: 0, padding: "16px clamp(16px, 5vw, 48px) clamp(24px, 5vw, 40px)" }}>
             {showValidationMessage && (
               <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", padding: "10px 12px", borderRadius: "10px", marginBottom: "12px", background: dark ? "rgba(248,113,113,0.08)" : "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.24)", color: "#f87171", fontSize: "0.78rem", lineHeight: 1.45 }}>
                 <AlertCircle size={14} strokeWidth={1.9} style={{ flex: "0 0 auto", marginTop: "1px" }} />

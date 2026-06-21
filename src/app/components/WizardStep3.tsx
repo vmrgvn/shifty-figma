@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
-import { Plus, Trash2, ChevronDown, AlertCircle } from "lucide-react";
+import ReactDOM from "react-dom";
+import { Plus, Trash2, ChevronDown, Clock3 } from "lucide-react";
 import type { LanguageCode } from "./NavMenu";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -313,30 +314,103 @@ function Label({ text, dark }: { text: string; dark: boolean }) {
 }
 
 function Hint({ text, dark }: { text: string; dark: boolean }) {
-  const tc = colors(dark);
   return (
-    <div style={{ display: "flex", gap: "6px", alignItems: "flex-start", padding: "8px 10px", borderRadius: "8px", background: tc.chipBg, border: `1px solid ${tc.rowBorder}` }}>
-      <AlertCircle size={13} strokeWidth={1.8} style={{ color: tc.iconMuted, flexShrink: 0, marginTop: "1px" }} />
-      <span style={{ color: tc.sub, fontSize: "0.75rem", lineHeight: 1.5 }}>{text}</span>
+    <div style={{ borderLeft: `2px solid ${dark ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.35)"}`, background: dark ? "rgba(168,85,247,0.06)" : "rgba(168,85,247,0.05)", borderRadius: "0 6px 6px 0", padding: "8px 12px" }}>
+      <span style={{ color: dark ? "rgba(196,181,253,0.75)" : "rgba(91,33,182,0.65)", fontSize: "0.78rem", lineHeight: 1.6, fontFamily: "'DM Sans',sans-serif" }}>{text}</span>
     </div>
   );
 }
 
 function TimeInput({ value, onChange, dark }: { value: string; onChange: (v: string) => void; dark: boolean }) {
-  const [focused, setFocused] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const hourColRef = useRef<HTMLDivElement>(null);
+  const minColRef = useRef<HTMLDivElement>(null);
   const tc = colors(dark);
+
+  const parts = value ? value.split(":") : ["", ""];
+  const hh = parts[0] ?? "";
+  const mm = parts[1] ?? "";
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (!dropRef.current?.contains(e.target as Node) && !triggerRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    setTimeout(() => {
+      if (hourColRef.current && hh) {
+        const el = hourColRef.current.querySelector(`[data-v="${hh}"]`) as HTMLElement;
+        el?.scrollIntoView({ block: "center" });
+      }
+      if (minColRef.current && mm) {
+        const el = minColRef.current.querySelector(`[data-v="${mm}"]`) as HTMLElement;
+        el?.scrollIntoView({ block: "center" });
+      }
+    }, 0);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + 4, left: r.left });
+    setOpen(v => !v);
+  };
+
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+  const mins  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+  const dropBg = dark ? "#1a1730" : "#ffffff";
+  const shadow = dark ? "0 20px 56px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.06)" : "0 8px 32px rgba(0,0,0,0.13), 0 0 0 1px rgba(0,0,0,0.07)";
+  const colStyle: React.CSSProperties = { width: 48, maxHeight: 200, overflowY: "auto", padding: "2px" };
+
+  const itemBtn = (v: string, active: boolean, onClick: () => void, colKey: "h" | "m") => (
+    <button key={v} data-v={v} onClick={onClick} style={{
+      display: "block", width: "100%", padding: "5px 0", border: "none", cursor: "pointer",
+      background: active ? "linear-gradient(135deg,#a855f7,#ec4899)" : "none",
+      color: active ? "#fff" : (dark ? "#c4bde0" : "#6a6680"),
+      fontSize: "0.82rem", fontFamily: "'DM Sans',sans-serif", textAlign: "center",
+      borderRadius: "6px", transition: "background 0.1s",
+    }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)"; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = "none"; }}
+    >{v}</button>
+  );
+
   return (
-    <input type="time" value={value} onChange={e => onChange(e.target.value)}
-      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-      style={{
-        background: tc.inputBg, border: `1.5px solid ${focused ? "#a855f7" : tc.inputBorder}`,
-        borderRadius: "8px", padding: "8px 10px", color: tc.headline,
+    <>
+      <button ref={triggerRef} onClick={handleOpen} style={{
+        background: tc.inputBg, border: `1.5px solid ${open ? "#a855f7" : tc.inputBorder}`,
+        borderRadius: "8px", padding: "7px 10px", color: value ? tc.headline : tc.faint,
         fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", outline: "none",
-        transition: "border-color 0.18s", width: "100px",
-      }}
-    />
+        transition: "border-color 0.18s", width: "96px", cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px",
+      }}>
+        <span>{value || "--:--"}</span>
+        <Clock3 size={12} strokeWidth={1.8} style={{ color: tc.iconMuted, flexShrink: 0 }} />
+      </button>
+      {open && typeof document !== "undefined" && ReactDOM.createPortal(
+        <div ref={dropRef} style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 9999, background: dropBg, borderRadius: "10px", padding: "4px", boxShadow: shadow, display: "flex", gap: "2px" }}>
+          <div ref={hourColRef} style={colStyle}>
+            {hours.map(h => itemBtn(h, h === hh, () => { onChange(`${h}:${mm || "00"}`); }, "h"))}
+          </div>
+          <div style={{ width: 1, background: dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", margin: "4px 0" }} />
+          <div ref={minColRef} style={colStyle}>
+            {mins.map(m => itemBtn(m, m === mm, () => { onChange(`${hh || "00"}:${m}`); }, "m"))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
+
 
 function RoleDropdown({ value, onChange, roles, dark, sc }: {
   value: string; onChange: (v: string) => void; roles: string[]; dark: boolean; sc: S3Copy;
@@ -431,55 +505,57 @@ function CycleBuilder({ cycle, onChange, dark, sc }: {
     <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       <Hint text={sc.cycleHint} dark={dark} />
 
-      {cycle.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
-          {cycle.map(seg => {
-            const isWork = seg.type === "work";
-            return (
-              <div key={seg.id} style={{
-                display: "inline-flex", alignItems: "center", gap: "6px",
-                padding: "5px 8px 5px 12px", borderRadius: "10px",
-                background: isWork ? workColor : offColor,
-                border: `1px solid ${isWork ? workBorder : offBorder}`,
-              }}>
-                <span style={{ color: isWork ? workText : offText, fontSize: "0.75rem", fontWeight: 600 }}>
-                  {isWork ? sc.workDay : sc.dayOff}
-                </span>
-                <button onClick={() => deleteSeg(seg.id)} style={{
-                  background: "none", border: "none", cursor: "pointer", padding: "0 0 0 2px",
-                  color: tc.iconMuted, display: "flex", lineHeight: 1, fontSize: "0.75rem",
-                }}>✕</button>
-              </div>
-            );
-          })}
-        </div>
-      )}
+      <div style={{ background: dark ? "rgba(168,85,247,0.04)" : "rgba(168,85,247,0.03)", border: `1px solid ${dark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.12)"}`, borderRadius: "10px", padding: "12px", display: "flex", flexDirection: "column", gap: "10px" }}>
+        {cycle.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", alignItems: "center" }}>
+            {cycle.map(seg => {
+              const isWork = seg.type === "work";
+              return (
+                <div key={seg.id} style={{
+                  display: "inline-flex", alignItems: "center", gap: "6px",
+                  padding: "5px 8px 5px 12px", borderRadius: "10px",
+                  background: isWork ? workColor : offColor,
+                  border: `1px solid ${isWork ? workBorder : offBorder}`,
+                }}>
+                  <span style={{ color: isWork ? workText : offText, fontSize: "0.75rem", fontWeight: 600 }}>
+                    {isWork ? sc.workDay : sc.dayOff}
+                  </span>
+                  <button onClick={() => deleteSeg(seg.id)} style={{
+                    background: "none", border: "none", cursor: "pointer", padding: "0 0 0 2px",
+                    color: tc.iconMuted, display: "flex", lineHeight: 1, fontSize: "0.75rem",
+                  }}>✕</button>
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-      {total < 7 && (
-        <div style={{ display: "flex", gap: "6px" }}>
-          <button onClick={() => addSeg("work")} style={{
-            display: "inline-flex", alignItems: "center", gap: "5px",
-            padding: "7px 12px", borderRadius: "10px", border: "none", cursor: "pointer",
-            background: workColor, outline: `1px solid ${workBorder}`,
-            color: workText, fontSize: "0.78rem", fontWeight: 500,
-            fontFamily: "'DM Sans',sans-serif", transition: "opacity 0.15s",
-          }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
-            onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-          ><Plus size={12} strokeWidth={2.5} />{sc.workDay}</button>
+        {total < 7 && (
+          <div style={{ display: "flex", gap: "6px" }}>
+            <button onClick={() => addSeg("work")} style={{
+              display: "inline-flex", alignItems: "center", gap: "5px",
+              padding: "7px 12px", borderRadius: "10px", border: "none", cursor: "pointer",
+              background: workColor, outline: `1px solid ${workBorder}`,
+              color: workText, fontSize: "0.78rem", fontWeight: 500,
+              fontFamily: "'DM Sans',sans-serif", transition: "opacity 0.15s",
+            }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+            ><Plus size={12} strokeWidth={2.5} />{sc.workDay}</button>
 
-          <button onClick={() => addSeg("off")} style={{
-            display: "inline-flex", alignItems: "center", gap: "5px",
-            padding: "7px 12px", borderRadius: "10px", border: "none", cursor: "pointer",
-            background: offColor, outline: `1px solid ${offBorder}`,
-            color: offText, fontSize: "0.78rem", fontWeight: 500,
-            fontFamily: "'DM Sans',sans-serif", transition: "opacity 0.15s",
-          }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
-            onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-          ><Plus size={12} strokeWidth={2.5} />{sc.dayOff}</button>
-        </div>
-      )}
+            <button onClick={() => addSeg("off")} style={{
+              display: "inline-flex", alignItems: "center", gap: "5px",
+              padding: "7px 12px", borderRadius: "10px", border: "none", cursor: "pointer",
+              background: offColor, outline: `1px solid ${offBorder}`,
+              color: offText, fontSize: "0.78rem", fontWeight: 500,
+              fontFamily: "'DM Sans',sans-serif", transition: "opacity 0.15s",
+            }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = "0.75")}
+              onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+            ><Plus size={12} strokeWidth={2.5} />{sc.dayOff}</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -709,14 +785,13 @@ export function StepFour({ data, onChange, globalRoles, onGoToStep, dark, langua
       <p style={{ color: tc.headline, fontWeight: 600, fontSize: "1.15rem", margin: "0 0 6px", letterSpacing: "-0.03em" }}>
         {sc.shiftsTitle}
       </p>
-      <p style={{ color: tc.sub, fontSize: "0.8rem", margin: "0 0 12px", lineHeight: 1.55 }}>
-        {sc.shiftsDesc}
-      </p>
+      <div style={{ borderLeft: `2px solid ${dark ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.35)"}`, background: dark ? "rgba(168,85,247,0.06)" : "rgba(168,85,247,0.05)", borderRadius: "0 6px 6px 0", padding: "8px 12px", marginBottom: "12px" }}>
+        <span style={{ color: dark ? "rgba(196,181,253,0.75)" : "rgba(91,33,182,0.65)", fontSize: "0.78rem", lineHeight: 1.6, fontFamily: "'DM Sans',sans-serif" }}>{sc.shiftsDesc}</span>
+      </div>
 
       {!hasRoles && (
-        <div style={{ display: "flex", gap: "8px", alignItems: "flex-start", padding: "10px 12px", borderRadius: "10px", background: tc.chipBg, border: `1px solid ${tc.rowBorder}`, marginBottom: "14px" }}>
-          <AlertCircle size={14} strokeWidth={1.8} style={{ color: tc.iconMuted, flexShrink: 0, marginTop: "1px" }} />
-          <span style={{ color: tc.sub, fontSize: "0.78rem", lineHeight: 1.6 }}>
+        <div style={{ borderLeft: `2px solid ${dark ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.35)"}`, background: dark ? "rgba(168,85,247,0.06)" : "rgba(168,85,247,0.05)", borderRadius: "0 6px 6px 0", padding: "8px 12px", marginBottom: "14px" }}>
+          <span style={{ color: dark ? "rgba(196,181,253,0.75)" : "rgba(91,33,182,0.65)", fontSize: "0.78rem", lineHeight: 1.6, fontFamily: "'DM Sans',sans-serif" }}>
             {sc.rolesHintPre}{" "}
             <a onClick={() => onGoToStep(1)} style={{ color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", textDecoration: "none", fontWeight: 500 }}
               onMouseEnter={e => ((e.target as HTMLElement).style.textDecoration = "underline")}

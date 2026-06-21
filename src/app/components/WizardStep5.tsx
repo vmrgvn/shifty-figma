@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
-import { Plus, X, Clock, CalendarX, Timer, Shuffle } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import ReactDOM from "react-dom";
+import { Plus, X, Clock, CalendarX, Timer, Shuffle, Clock3 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export interface Break5    { id: number; from: string; to: string; }
@@ -48,28 +49,98 @@ function SectionTitle({ icon: Icon, title, desc, dark }: { icon: any; title: str
   const tc = colors(dark);
   return (
     <div style={{ marginBottom: "12px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "4px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px" }}>
         <Icon size={14} strokeWidth={2} style={{ color: dark ? "#c4b5fd" : "#7c3aed" }} />
         <span style={{ color: tc.headline, fontWeight: 600, fontSize: "0.9rem", letterSpacing: "-0.02em" }}>{title}</span>
       </div>
-      <p style={{ color: tc.sub, fontSize: "0.75rem", margin: 0, lineHeight: 1.55, paddingLeft: "21px" }}>{desc}</p>
+      <div style={{ borderLeft: `2px solid ${dark ? "rgba(168,85,247,0.4)" : "rgba(168,85,247,0.35)"}`, background: dark ? "rgba(168,85,247,0.06)" : "rgba(168,85,247,0.05)", borderRadius: "0 6px 6px 0", padding: "8px 12px" }}>
+        <span style={{ color: dark ? "rgba(196,181,253,0.75)" : "rgba(91,33,182,0.65)", fontSize: "0.78rem", lineHeight: 1.6, fontFamily: "'DM Sans',sans-serif" }}>{desc}</span>
+      </div>
     </div>
   );
 }
 
 function TimeInput({ value, onChange, dark }: { value: string; onChange: (v: string) => void; dark: boolean }) {
-  const [focused, setFocused] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
+  const hourColRef = useRef<HTMLDivElement>(null);
+  const minColRef = useRef<HTMLDivElement>(null);
   const tc = colors(dark);
+
+  const parts = value ? value.split(":") : ["", ""];
+  const hh = parts[0] ?? "";
+  const mm = parts[1] ?? "";
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (!dropRef.current?.contains(e.target as Node) && !triggerRef.current?.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    setTimeout(() => {
+      if (hourColRef.current && hh) (hourColRef.current.querySelector(`[data-v="${hh}"]`) as HTMLElement)?.scrollIntoView({ block: "center" });
+      if (minColRef.current && mm) (minColRef.current.querySelector(`[data-v="${mm}"]`) as HTMLElement)?.scrollIntoView({ block: "center" });
+    }, 0);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!triggerRef.current) return;
+    const r = triggerRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + 4, left: r.left });
+    setOpen(v => !v);
+  };
+
+  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
+  const mins  = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
+  const dropBg = dark ? "#1a1730" : "#ffffff";
+  const shadow = dark ? "0 20px 56px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.06)" : "0 8px 32px rgba(0,0,0,0.13), 0 0 0 1px rgba(0,0,0,0.07)";
+  const colStyle: React.CSSProperties = { width: 48, maxHeight: 200, overflowY: "auto", padding: "2px" };
+
+  const itemBtn = (v: string, active: boolean, onClick: () => void) => (
+    <button key={v} data-v={v} onClick={onClick} style={{
+      display: "block", width: "100%", padding: "5px 0", border: "none", cursor: "pointer",
+      background: active ? "linear-gradient(135deg,#a855f7,#ec4899)" : "none",
+      color: active ? "#fff" : (dark ? "#c4bde0" : "#6a6680"),
+      fontSize: "0.82rem", fontFamily: "'DM Sans',sans-serif", textAlign: "center",
+      borderRadius: "6px", transition: "background 0.1s",
+    }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)"; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = "none"; }}
+    >{v}</button>
+  );
+
   return (
-    <input type="time" value={value} onChange={e => onChange(e.target.value)}
-      onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
-      style={{
-        background: tc.inputBg, border: `1.5px solid ${focused ? "#a855f7" : tc.inputBorder}`,
-        borderRadius: "8px", padding: "7px 10px", color: tc.headline,
-        fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif",
-        outline: "none", transition: "border-color 0.18s", width: "96px",
-      }}
-    />
+    <>
+      <button ref={triggerRef} onClick={handleOpen} style={{
+        background: tc.inputBg, border: `1.5px solid ${open ? "#a855f7" : tc.inputBorder}`,
+        borderRadius: "8px", padding: "7px 10px", color: value ? tc.headline : tc.faint,
+        fontSize: "0.85rem", fontFamily: "'DM Sans',sans-serif", outline: "none",
+        transition: "border-color 0.18s", width: "96px", cursor: "pointer",
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: "6px",
+      }}>
+        <span>{value || "--:--"}</span>
+        <Clock3 size={12} strokeWidth={1.8} style={{ color: tc.iconMuted, flexShrink: 0 }} />
+      </button>
+      {open && typeof document !== "undefined" && ReactDOM.createPortal(
+        <div ref={dropRef} style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 9999, background: dropBg, borderRadius: "10px", padding: "4px", boxShadow: shadow, display: "flex", gap: "2px" }}>
+          <div ref={hourColRef} style={colStyle}>
+            {hours.map(h => itemBtn(h, h === hh, () => { onChange(`${h}:${mm || "00"}`); }))}
+          </div>
+          <div style={{ width: 1, background: dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)", margin: "4px 0" }} />
+          <div ref={minColRef} style={colStyle}>
+            {mins.map(m => itemBtn(m, m === mm, () => { onChange(`${hh || "00"}:${m}`); }))}
+          </div>
+        </div>,
+        document.body
+      )}
+    </>
   );
 }
 
