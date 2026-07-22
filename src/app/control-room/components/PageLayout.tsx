@@ -27,17 +27,19 @@ export function PageLayout({ width = "default", title, description, eyebrow, not
   return (
     <main className={`cr-page cr-page--${width} ${className}`.trim()} data-page-width={width}>
       <div className="cr-page-canvas">
-        <header className="cr-page-header">
-          <div className="cr-page-header-copy">
-            {eyebrow && <div className="cr-page-header-eyebrow">{eyebrow}</div>}
-            <h1>{title}</h1>
-            {description && <div className="cr-page-header-description">{description}</div>}
-          </div>
-          <div className="cr-page-header-controls">
-            <div className="cr-page-header-notification">{notification}</div>
-            {action && <div className="cr-page-header-action">{action}</div>}
-          </div>
-        </header>
+        <div className="cr-page-header-sticky">
+          <header className="cr-page-header">
+            <div className="cr-page-header-copy">
+              {eyebrow && <div className="cr-page-header-eyebrow">{eyebrow}</div>}
+              <h1>{title}</h1>
+              {description && <div className="cr-page-header-description">{description}</div>}
+            </div>
+            <div className="cr-page-header-controls">
+              <div className="cr-page-header-notification">{notification}</div>
+              {action && <div className="cr-page-header-action">{action}</div>}
+            </div>
+          </header>
+        </div>
         {children}
       </div>
     </main>
