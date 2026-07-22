@@ -2,10 +2,11 @@ import { Bell, Check, Globe2, LockKeyhole, MessageSquareText, ShieldCheck, Smart
 import { useState, type ReactNode } from "react";
 import type { AppPreferences } from "../../../data/repositories/localAppRepository";
 import type { ThemeMode } from "../../components/NavMenu";
-import { PageLayout } from "../components/PageLayout";
+import { TopLevelPageLayout } from "../components/PageLayout";
 
 interface Props {
   notification: ReactNode;
+  onCreate: () => void;
   theme: ThemeMode;
   preferences: AppPreferences;
   onTheme: (theme: ThemeMode) => void;
@@ -13,7 +14,7 @@ interface Props {
   onLogout: () => void;
 }
 
-export function SettingsPage({ notification, theme, preferences, onTheme, onPreferences, onLogout }: Props) {
+export function SettingsPage({ notification, onCreate, theme, preferences, onTheme, onPreferences, onLogout }: Props) {
   const [saved, setSaved] = useState(false);
   const showSaved = () => { setSaved(true); window.setTimeout(() => setSaved(false), 1300); };
   const savePreferences = (patch: Partial<AppPreferences>) => { onPreferences(patch); showSaved(); };
@@ -26,17 +27,9 @@ export function SettingsPage({ notification, theme, preferences, onTheme, onPref
   ];
 
   return (
-    <PageLayout width="default" title="Настройки" description="Оформление, уведомления и параметры локального MVP." notification={notification}>
+    <TopLevelPageLayout width="default" title="Настройки" description="Оформление, уведомления и параметры локального MVP." notification={notification} onCreateSchedule={onCreate}>
       {saved && <div className="cr-save-feedback" role="status"><Check size={13} aria-hidden="true" /> Сохранено</div>}
-      <div className="cr-settings-layout">
-        <nav className="cr-settings-nav" aria-label="Разделы настроек">
-          <a href="#appearance">Оформление</a>
-          <a href="#locale">Язык и регион</a>
-          <a href="#notifications">Уведомления</a>
-          <a href="#security">Безопасность</a>
-          <a href="#account">Аккаунт</a>
-        </nav>
-        <div>
+      <div className="cr-settings-content">
           <section id="appearance" className="cr-panel cr-setting-section">
             <h2>Оформление</h2>
             <p>Тема применяется ко всему приложению и сохраняется на этом устройстве.</p>
@@ -78,8 +71,7 @@ export function SettingsPage({ notification, theme, preferences, onTheme, onPref
             <div className="cr-setting-row"><span><strong><ShieldCheck size={14} /> Номер телефона</strong></span><b>•••• •••• ••44</b></div>
             <div className="cr-setting-row"><span><strong><LockKeyhole size={14} /> Сеанс</strong><br /><small>Вход не сохраняется после перезагрузки страницы</small></span><button className="cr-secondary" onClick={onLogout}>Выйти</button></div>
           </section>
-        </div>
       </div>
-    </PageLayout>
+    </TopLevelPageLayout>
   );
 }
