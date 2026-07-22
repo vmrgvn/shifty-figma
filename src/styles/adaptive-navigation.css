@@ -138,7 +138,7 @@
   position: absolute;
   z-index: 4;
   inset-block-start: 15px;
-  inset-inline-end: 12px;
+  inset-inline-start: calc(var(--app-rail-expanded-width) - 54px);
 }
 
 .cr-live-pin-button {
@@ -159,7 +159,9 @@
 .cr-pin-tooltip {
   position: absolute;
   inset-block-start: calc(100% + 7px);
+  inset-inline-start: auto;
   inset-inline-end: 0;
+  max-inline-size: min(220px, calc(100vw - (2 * var(--app-rail-edge-gap))));
   padding: 6px 9px;
   border-radius: 8px;
   background: var(--cr-text);
@@ -311,24 +313,6 @@
 }
 
 .cr-live-footer { display: grid; gap: 5px; min-inline-size: 0; }
-
-.cr-live-unpin {
-  inline-size: 100%;
-  min-block-size: 42px;
-  padding-inline: 15px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: var(--cr-muted);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 650;
-  text-align: start;
-}
-.cr-live-unpin:hover { background: var(--cr-surface-2); color: var(--cr-text); }
 
 .cr-live-profile-wrap { position: relative; min-inline-size: 0; }
 .cr-live-profile {
@@ -487,7 +471,6 @@
   .cr-live-nav-list { gap: 3px; padding-block: 4px; }
   .cr-live-nav-item--rail { --app-nav-item-size: 44px; }
   .cr-live-profile { block-size: 46px; }
-  .cr-live-unpin { min-block-size: 36px; }
 }
 
 @media (max-width: 1023px) {

@@ -75,6 +75,42 @@ interface DesktopProps extends Props {
   onClosePreview: () => void;
 }
 
+interface NavigationPinToggleProps {
+  pinned: boolean;
+  pinAllowed: boolean;
+  onPin: () => void;
+  onUnpin: () => void;
+}
+
+function NavigationPinToggle({ pinned, pinAllowed, onPin, onUnpin }: NavigationPinToggleProps) {
+  const pinDisabled = !pinned && !pinAllowed;
+  const accessibleLabel = pinned
+    ? "Открепить меню"
+    : pinDisabled
+      ? "Закрепление доступно на экранах от 1200 пикселей"
+      : "Закрепить меню";
+  const tooltip = pinned ? "Открепить меню" : pinDisabled ? "Доступно от 1200 px" : "Закрепить меню";
+
+  return (
+    <div className="cr-live-pin-wrap">
+      <button
+        type="button"
+        className="cr-live-pin-button"
+        aria-label={accessibleLabel}
+        aria-pressed={pinned}
+        aria-disabled={pinDisabled}
+        onClick={() => {
+          if (pinned) onUnpin();
+          else if (pinAllowed) onPin();
+        }}
+      >
+        {pinned ? <PinOff size={17} aria-hidden="true" /> : <Pin size={17} aria-hidden="true" />}
+      </button>
+      <span className="cr-pin-tooltip" role="tooltip">{tooltip}</span>
+    </div>
+  );
+}
+
 function DesktopLiveRail({
   pathname,
   wishesCount,
@@ -196,19 +232,13 @@ function DesktopLiveRail({
           </button>
         )}
 
-        {presentation === "preview" && (
-          <div className="cr-live-pin-wrap">
-            <button
-              type="button"
-              className="cr-live-pin-button"
-              aria-label={pinnedLayoutAllowed ? "Закрепить меню" : "Закрепление доступно на экранах от 1200 пикселей"}
-              aria-disabled={!pinnedLayoutAllowed}
-              onClick={() => { if (pinnedLayoutAllowed) pinMenu(); }}
-            >
-              <Pin size={17} aria-hidden="true" />
-            </button>
-            <span className="cr-pin-tooltip" role="tooltip">{pinnedLayoutAllowed ? "Закрепить меню" : "Доступно от 1200 px"}</span>
-          </div>
+        {fullPanel && (
+          <NavigationPinToggle
+            pinned={presentation === "pinned"}
+            pinAllowed={pinnedLayoutAllowed}
+            onPin={pinMenu}
+            onUnpin={unpinMenu}
+          />
         )}
 
         <div className="cr-live-nav-region">
@@ -237,11 +267,6 @@ function DesktopLiveRail({
         </div>
 
         <div className="cr-live-footer">
-          {presentation === "pinned" && (
-            <button type="button" className="cr-live-unpin" onClick={unpinMenu} aria-label="Открепить меню">
-              <PinOff size={17} aria-hidden="true" /><span>Открепить</span>
-            </button>
-          )}
           <div className="cr-live-profile-wrap">
             <button
               type="button"
