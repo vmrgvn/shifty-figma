@@ -1,7 +1,8 @@
 import { ArrowLeft, CalendarRange, ChevronLeft, ChevronRight, FileText, Printer, RefreshCw, Send, Sparkles } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { GeneratedSchedule, ScheduleAssignment, ScheduleIssue } from "../../../domain/schedule/types";
 import { IssuesPanel } from "../components/IssuesPanel";
+import { PageLayout } from "../components/PageLayout";
 import { ScheduleDayAgenda } from "../components/ScheduleDayAgenda";
 import { ScheduleGrid } from "../components/ScheduleGrid";
 import { ScheduleHealthStrip } from "../components/ScheduleHealthStrip";
@@ -11,6 +12,7 @@ import { addDays, datesBetween, formatDate, formatPeriod, statusLabel, weekdayLa
 type ViewMode = "day" | "week" | "two_weeks" | "month";
 
 interface Props {
+  notification: ReactNode;
   schedule: GeneratedSchedule;
   openIssuesInitially?: boolean;
   onBack: () => void;
@@ -24,7 +26,7 @@ function MonthView({ schedule, onDay }: { schedule: GeneratedSchedule; onDay: (d
   return <div style={{ overflowX: "auto" }}><div className="cr-month">{dates.map(date => { const assignments = schedule.assignments.filter(item => item.date === date); const issues = schedule.issues.filter(item => !item.resolved && item.date === date); return <button className="cr-month-day" key={date} onClick={() => onDay(date)}><strong>{weekdayLabel(date)} · {formatDate(date)}</strong><span>{assignments.length} назначений</span><span>{issues.length ? `${issues.length} требует внимания` : "Без вопросов"}</span></button>; })}</div></div>;
 }
 
-export function ScheduleWorkspacePage({ schedule, openIssuesInitially, onBack, onEdit, onPrint, onPublish }: Props) {
+export function ScheduleWorkspacePage({ notification, schedule, openIssuesInitially, onBack, onEdit, onPrint, onPublish }: Props) {
   const allDates = useMemo(() => datesBetween(schedule.period.start, schedule.period.end), [schedule.period.start, schedule.period.end]);
   const [view, setView] = useState<ViewMode>(window.innerWidth < 768 ? "day" : "week");
   const [selectedDate, setSelectedDate] = useState(allDates[0]);
@@ -44,11 +46,14 @@ export function ScheduleWorkspacePage({ schedule, openIssuesInitially, onBack, o
   };
 
   return (
-    <main className="cr-page is-wide">
-      <div className="cr-workspace-header">
-        <div><button className="cr-breadcrumb" onClick={onBack}><ArrowLeft size={12} /> Расписания</button><h1>{schedule.name}</h1><div style={{ display: "flex", gap: 9, alignItems: "center", flexWrap: "wrap" }}><span className={`cr-status ${schedule.status}`}>{statusLabel(schedule.status)}</span><span className="cr-period">{formatPeriod(schedule)} · обновлено {new Date(schedule.updatedAt).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span></div></div>
-        <div className="cr-workspace-actions"><button className="cr-secondary cr-desktop-only" onClick={onEdit}><RefreshCw size={14} /> Изменить параметры</button><button className="cr-secondary" onClick={onPrint}><Printer size={14} /><span className="cr-desktop-only">Печать</span></button>{schedule.status !== "published" && schedule.status !== "failed" && <button className="cr-primary" onClick={onPublish}><Send size={14} /> Опубликовать</button>}</div>
-      </div>
+    <PageLayout
+      width="wide"
+      title={schedule.name}
+      eyebrow={<button className="cr-breadcrumb" onClick={onBack}><ArrowLeft size={12} aria-hidden="true" /> Расписания</button>}
+      description={<div className="cr-workspace-meta"><span className={`cr-status ${schedule.status}`}>{statusLabel(schedule.status)}</span><span className="cr-period">{formatPeriod(schedule)} · обновлено {new Date(schedule.updatedAt).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span></div>}
+      notification={notification}
+      action={<div className="cr-workspace-actions"><button className="cr-secondary cr-desktop-only" onClick={onEdit}><RefreshCw size={14} /> Изменить параметры</button><button className="cr-secondary" onClick={onPrint}><Printer size={14} /><span className="cr-desktop-only">Печать</span></button>{schedule.status !== "published" && schedule.status !== "failed" && <button className="cr-primary" onClick={onPublish}><Send size={14} /> Опубликовать</button>}</div>}
+    >
       {schedule.isDemoResult && <div className="cr-banner"><Sparkles size={16} color="var(--cr-info)" /><div><strong>Демонстрационное распределение</strong><br />Интерфейс показывает, как будет выглядеть результат будущего движка. Текущее распределение создано простым локальным алгоритмом и не считается оптимальным.</div></div>}
       {schedule.status === "failed" && <div className="cr-banner warning"><FileText size={16} /><div><strong>Не удалось составить расписание</strong><br />Откройте ситуации ниже и исправьте параметры в визарде.</div></div>}
       <div className="cr-panel cr-toolbar">
@@ -65,6 +70,6 @@ export function ScheduleWorkspacePage({ schedule, openIssuesInitially, onBack, o
         {selected && <><button className="cr-scrim cr-mobile-only" onClick={() => setSelected(null)} aria-label="Закрыть детали" /><ShiftInspector schedule={schedule} assignment={selected} onClose={() => setSelected(null)} /></>}
       </div>
       {issuesOpen && <IssuesPanel schedule={schedule} onClose={() => setIssuesOpen(false)} onShow={selectIssue} />}
-    </main>
+    </PageLayout>
   );
 }

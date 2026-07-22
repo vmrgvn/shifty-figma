@@ -1,4 +1,3 @@
-import { Bell, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { GeneratedSchedule, ScheduleDraft } from "../../domain/schedule/types";
@@ -27,6 +26,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { WishesPage } from "./pages/WishesPage";
 import { AdaptiveNavigation } from "./navigation/AdaptiveNavigation";
 import { activeNavigationItem } from "./navigation/navigationModel";
+import { NotificationMenu } from "./components/NotificationMenu";
 
 interface Props {
   dark: boolean;
@@ -47,7 +47,6 @@ export function ControlRoom({ dark, language, theme, onThemeChange, onLogout }: 
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [preferences, setPreferences] = useState<AppPreferences>(() => preferencesRepository.get());
   const [loading, setLoading] = useState(true);
-  const [notificationOpen, setNotificationOpen] = useState(false);
   const [toast, setToast] = useState<ToastState>(null);
   const toastId = useRef(0);
 
@@ -66,7 +65,6 @@ export function ControlRoom({ dark, language, theme, onThemeChange, onLogout }: 
 
   const path = location.pathname;
   const section = activeNavigationItem(path).id;
-  const unread = notifications.filter(item => !item.read).length;
   const workspaceMatch = path.match(/^\/app\/schedules\/([^/]+)$/);
   const printMatch = path.match(/^\/print\/([^/]+)$/);
   const selectedSchedule = schedules.find(item => item.id === (workspaceMatch?.[1] ?? printMatch?.[1]));
@@ -101,19 +99,19 @@ export function ControlRoom({ dark, language, theme, onThemeChange, onLogout }: 
   const saveWish = async (wish: EmployeeWish) => { await wishRepository.save(wish); await reload(); showToast("Пожелание обновлено"); };
   const publish = async (id: string) => { await publishSchedule(id); await reload(); showToast("Расписание опубликовано"); };
   const updatePreferences = (patch: Partial<AppPreferences>) => { setPreferences(preferencesRepository.save(patch)); };
-  const openNotification = async (notification: AppNotification) => { await notificationRepository.markRead(notification.id); setNotificationOpen(false); await reload(); navigate(notification.target); };
+  const openNotification = async (notification: AppNotification) => { await notificationRepository.markRead(notification.id); await reload(); navigate(notification.target); };
   const markAllRead = async () => { await notificationRepository.markRead(); await reload(); };
 
   if (loading) return <div className="cr-root cr-empty"><div><div className="cr-block-illustration" aria-hidden="true">{Array.from({ length: 12 }, (_, index) => <i key={index} />)}</div><h2>Готовим рабочее пространство</h2><p>Загружаем расписания и пожелания.</p></div></div>;
   if (printMatch) return selectedSchedule ? <PrintSchedulePage schedule={selectedSchedule} onBack={() => navigate(`/app/schedules/${selectedSchedule.id}`)} /> : <div className="cr-root cr-empty"><div><h2>Расписание не найдено</h2><button className="cr-primary" onClick={() => navigate("/app/schedules")}>К расписаниям</button></div></div>;
   if (creating) return <Wizard dark={dark} language={language} theme={theme} onThemeChange={onThemeChange} onLanguageChange={() => {}} onBack={() => navigate("/app/schedules")} onSignUp={saveWizard} signUpLabel="Сохранить и открыть" />;
 
-  const pageTitle = section === "overview" ? "Обзор" : section === "schedules" ? selectedSchedule?.name ?? "Расписания" : section === "wishes" ? "Пожелания" : "Настройки";
-  const content = selectedSchedule && workspaceMatch ? <ScheduleWorkspacePage schedule={selectedSchedule} openIssuesInitially={new URLSearchParams(location.search).has("issues")} onBack={() => navigate("/app/schedules")} onEdit={() => void editSchedule(selectedSchedule.id)} onPrint={() => navigate(`/print/${selectedSchedule.id}`)} onPublish={() => void publish(selectedSchedule.id)} />
-    : section === "overview" ? <OverviewPage schedules={schedules} wishes={wishes} onCreate={createSchedule} onOpenSchedule={(id, issues) => navigate(`/app/schedules/${id}${issues ? "?issues=1" : ""}`)} onOpenWishes={() => navigate("/app/wishes")} />
-    : section === "schedules" ? <SchedulesPage schedules={schedules} onCreate={createSchedule} onOpen={id => navigate(`/app/schedules/${id}`)} onEdit={id => void editSchedule(id)} onPrint={id => navigate(`/print/${id}`)} onDuplicate={schedule => void duplicateSchedule(schedule)} onArchive={schedule => void archiveSchedule(schedule)} onRemove={schedule => void removeSchedule(schedule)} />
-    : section === "wishes" ? <WishesPage wishes={wishes} onSave={wish => void saveWish(wish)} onOpenSchedule={id => navigate(`/app/schedules/${id}`)} />
-    : <SettingsPage theme={theme} preferences={preferences} onTheme={onThemeChange} onPreferences={updatePreferences} onLogout={onLogout} />;
+  const notificationMenu = <NotificationMenu notifications={notifications} pathname={path} onOpen={openNotification} onMarkAllRead={markAllRead} />;
+  const content = selectedSchedule && workspaceMatch ? <ScheduleWorkspacePage notification={notificationMenu} schedule={selectedSchedule} openIssuesInitially={new URLSearchParams(location.search).has("issues")} onBack={() => navigate("/app/schedules")} onEdit={() => void editSchedule(selectedSchedule.id)} onPrint={() => navigate(`/print/${selectedSchedule.id}`)} onPublish={() => void publish(selectedSchedule.id)} />
+    : section === "overview" ? <OverviewPage notification={notificationMenu} schedules={schedules} wishes={wishes} onCreate={createSchedule} onOpenSchedule={(id, issues) => navigate(`/app/schedules/${id}${issues ? "?issues=1" : ""}`)} onOpenWishes={() => navigate("/app/wishes")} />
+    : section === "schedules" ? <SchedulesPage notification={notificationMenu} schedules={schedules} onCreate={createSchedule} onOpen={id => navigate(`/app/schedules/${id}`)} onEdit={id => void editSchedule(id)} onPrint={id => navigate(`/print/${id}`)} onDuplicate={schedule => void duplicateSchedule(schedule)} onArchive={schedule => void archiveSchedule(schedule)} onRemove={schedule => void removeSchedule(schedule)} />
+    : section === "wishes" ? <WishesPage notification={notificationMenu} wishes={wishes} onSave={wish => void saveWish(wish)} onOpenSchedule={id => navigate(`/app/schedules/${id}`)} />
+    : <SettingsPage notification={notificationMenu} theme={theme} preferences={preferences} onTheme={onThemeChange} onPreferences={updatePreferences} onLogout={onLogout} />;
 
   return (
     <div className={`cr-root ${preferences.desktopNavigation === "pinned" ? "cr-nav-prefers-pinned" : ""}`}>
@@ -122,42 +120,10 @@ export function ControlRoom({ dark, language, theme, onThemeChange, onLogout }: 
         wishesCount={newWishesCount}
         desktopPreference={preferences.desktopNavigation}
         onDesktopPreferenceChange={desktopNavigation => updatePreferences({ desktopNavigation })}
-        onNavigate={() => setNotificationOpen(false)}
         onLogout={onLogout}
       />
       <div className="cr-shell">
-        <div className="cr-main">
-          <header className="cr-topbar">
-            <div className="cr-topbar-title"><strong>{pageTitle}</strong><span>Shifty Control Room</span></div>
-            <div className="cr-notification-wrap">
-              <button className="cr-icon-button" onClick={() => setNotificationOpen(value => !value)} aria-label={`Уведомления${unread ? `: ${unread} непрочитанных` : ""}`}>
-                <Bell size={16} />
-                {unread > 0 && <i className="cr-notification-dot" />}
-              </button>
-              {notificationOpen && (
-                <div className="cr-notification-panel">
-                  <div className="cr-notification-head">
-                    <strong>Уведомления</strong>
-                    <div>
-                      <button className="cr-ghost" onClick={() => void markAllRead()}>Прочитать все</button>
-                      <button className="cr-icon-button" onClick={() => setNotificationOpen(false)} aria-label="Закрыть уведомления"><X size={14} /></button>
-                    </div>
-                  </div>
-                  {notifications.length ? notifications.map(item => (
-                    <button className={`cr-notification-item ${item.read ? "" : "is-unread"}`} key={item.id} onClick={() => void openNotification(item)}>
-                      <i className={`cr-tone-dot ${item.tone}`} />
-                      <span>
-                        <strong style={{ display: "block", fontSize: 12 }}>{item.title}</strong>
-                        <span style={{ color: "var(--cr-muted)", display: "block", fontSize: 11, marginTop: 3 }}>{item.description}</span>
-                      </span>
-                    </button>
-                  )) : <div className="cr-empty" style={{ minHeight: 180 }}><p>Уведомлений пока нет.</p></div>}
-                </div>
-              )}
-            </div>
-          </header>
-          {content}
-        </div>
+        <div className="cr-main">{content}</div>
       </div>
       {toast && <div className="cr-toast" role="status">{toast.message}</div>}
     </div>
