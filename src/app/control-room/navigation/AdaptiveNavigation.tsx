@@ -1,12 +1,16 @@
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Pin, PinOff, Settings } from "lucide-react";
 import { useEffect, useRef, useState, type FocusEvent, type KeyboardEvent, type PointerEvent } from "react";
 import { Link } from "react-router";
-import { activeNavigationItem, primaryNavigation, type NavigationItemDefinition } from "./navigationModel";
+import type { DesktopNavigationPreference } from "../../../data/repositories/localAppRepository";
+import { activeNavigationItem, primaryNavigation, type NavigationItemDefinition, type NavigationItemId } from "./navigationModel";
+import { useDesktopNavigationMode, type DesktopNavigationPresentation } from "./useDesktopNavigationMode";
 import { useMobileKeyboardState } from "./useMobileKeyboardState";
 
 interface Props {
   pathname: string;
   wishesCount: number;
+  desktopPreference: DesktopNavigationPreference;
+  onDesktopPreferenceChange: (preference: DesktopNavigationPreference) => void;
   onNavigate?: () => void;
   onLogout: () => void;
 }
@@ -20,12 +24,12 @@ function ShiftyMark({ pulse = false }: { pulse?: boolean }) {
 }
 
 function badgeValue(count: number): string {
-  return count > 9 ? "9+" : String(count);
+  return count > 99 ? "99+" : String(count);
 }
 
 function itemAccessibleLabel(item: NavigationItemDefinition, count: number): string {
   if (item.id !== "wishes" || count <= 0) return item.accessibleLabel;
-  return `${item.accessibleLabel}, ${count > 9 ? "больше девяти" : count} новых`;
+  return `${item.accessibleLabel}, ${count > 99 ? "больше девяноста девяти" : count} новых`;
 }
 
 interface ItemProps {
@@ -33,67 +37,99 @@ interface ItemProps {
   active: boolean;
   count: number;
   variant: "rail" | "dock";
+  fullPanel?: boolean;
+  capsuleOpen?: boolean;
   onNavigate?: () => void;
+  onFocus?: () => void;
+  onBlur?: (event: FocusEvent<HTMLAnchorElement>) => void;
 }
 
-function NavigationItem({ item, active, count, variant, onNavigate }: ItemProps) {
+function NavigationItem({ item, active, count, variant, fullPanel = false, capsuleOpen = false, onNavigate, onFocus, onBlur }: ItemProps) {
   const visibleCount = item.id === "wishes" ? count : 0;
-  const tooltipId = `cr-nav-tooltip-${item.id}`;
   const { Icon } = item;
 
   return (
     <Link
       to={item.path}
-      className={`cr-live-nav-item cr-live-nav-item--${variant} ${active ? "is-active" : ""}`}
+      className={`cr-live-nav-item cr-live-nav-item--${variant} ${active ? "is-active" : ""} ${fullPanel ? "is-full-panel" : ""} ${capsuleOpen ? "is-capsule-open" : ""}`}
       aria-current={active ? "page" : undefined}
       aria-label={itemAccessibleLabel(item, visibleCount)}
-      aria-describedby={variant === "rail" ? tooltipId : undefined}
       onClick={onNavigate}
+      onFocus={onFocus}
+      onBlur={onBlur}
     >
-      <span className="cr-live-nav-icon" aria-hidden="true"><Icon size={21} strokeWidth={2} /></span>
+      <span className="cr-live-nav-icon" aria-hidden="true">
+        <Icon size={21} strokeWidth={2} />
+        {visibleCount > 0 && <span className="cr-live-nav-badge">{badgeValue(visibleCount)}</span>}
+      </span>
       <span className="cr-live-nav-label">{item.label}</span>
-      {visibleCount > 0 && <span className="cr-live-nav-badge" aria-hidden="true">{badgeValue(visibleCount)}</span>}
-      {variant === "rail" && <span className="cr-live-tooltip" id={tooltipId} role="tooltip">{item.label}</span>}
     </Link>
   );
 }
 
-function DesktopLiveRail({ pathname, wishesCount, onNavigate, onLogout }: Props) {
-  const [expanded, setExpanded] = useState(false);
+interface DesktopProps extends Props {
+  presentation: Exclude<DesktopNavigationPresentation, "dock">;
+  pinnedLayoutAllowed: boolean;
+  previewOpen: boolean;
+  onTogglePreview: () => void;
+  onClosePreview: () => void;
+}
+
+function DesktopLiveRail({
+  pathname,
+  wishesCount,
+  presentation,
+  pinnedLayoutAllowed,
+  previewOpen,
+  onTogglePreview,
+  onClosePreview,
+  onDesktopPreferenceChange,
+  onNavigate,
+  onLogout,
+}: DesktopProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [logoPulse, setLogoPulse] = useState(false);
-  const collapseTimer = useRef<number | null>(null);
+  const [capsuleId, setCapsuleId] = useState<NavigationItemId | null>(null);
+  const capsuleOpenTimer = useRef<number | null>(null);
+  const capsuleCloseTimer = useRef<number | null>(null);
   const railRef = useRef<HTMLElement>(null);
+  const brandRef = useRef<HTMLButtonElement>(null);
   const activeItem = activeNavigationItem(pathname);
+  const fullPanel = presentation === "preview" || presentation === "pinned";
 
-  const cancelCollapse = () => {
-    if (collapseTimer.current !== null) window.clearTimeout(collapseTimer.current);
-    collapseTimer.current = null;
+  const clearCapsuleTimers = () => {
+    if (capsuleOpenTimer.current !== null) window.clearTimeout(capsuleOpenTimer.current);
+    if (capsuleCloseTimer.current !== null) window.clearTimeout(capsuleCloseTimer.current);
+    capsuleOpenTimer.current = null;
+    capsuleCloseTimer.current = null;
   };
 
-  const scheduleCollapse = () => {
-    cancelCollapse();
-    if (profileOpen) return;
-    collapseTimer.current = window.setTimeout(() => setExpanded(false), 170);
+  const openCapsuleWithIntent = (id: NavigationItemId, event: PointerEvent<HTMLDivElement>) => {
+    if (fullPanel || event.pointerType !== "mouse" || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    clearCapsuleTimers();
+    capsuleOpenTimer.current = window.setTimeout(() => setCapsuleId(id), 80);
   };
 
-  useEffect(() => () => cancelCollapse(), []);
+  const closeCapsuleWithIntent = () => {
+    if (fullPanel) return;
+    clearCapsuleTimers();
+    capsuleCloseTimer.current = window.setTimeout(() => setCapsuleId(null), 150);
+  };
+
+  useEffect(() => () => clearCapsuleTimers(), []);
+  useEffect(() => { setProfileOpen(false); setCapsuleId(null); }, [pathname]);
+  useEffect(() => { if (fullPanel) setCapsuleId(null); }, [fullPanel]);
 
   useEffect(() => {
-    setProfileOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!profileOpen) return;
+    if (!previewOpen && !profileOpen) return;
     const closeOnOutsidePointer = (event: globalThis.PointerEvent) => {
-      if (!railRef.current?.contains(event.target as Node)) {
-        setProfileOpen(false);
-        setExpanded(false);
-      }
+      if (railRef.current?.contains(event.target as Node)) return;
+      setProfileOpen(false);
+      if (previewOpen) onClosePreview();
     };
     document.addEventListener("pointerdown", closeOnOutsidePointer);
     return () => document.removeEventListener("pointerdown", closeOnOutsidePointer);
-  }, [profileOpen]);
+  }, [onClosePreview, previewOpen, profileOpen]);
 
   useEffect(() => {
     setLogoPulse(false);
@@ -102,70 +138,130 @@ function DesktopLiveRail({ pathname, wishesCount, onNavigate, onLogout }: Props)
     return () => { window.cancelAnimationFrame(frame); window.clearTimeout(timer); };
   }, [pathname]);
 
-  const handlePointerEnter = (event: PointerEvent<HTMLElement>) => {
-    cancelCollapse();
-    if (event.pointerType === "mouse" && window.matchMedia("(hover: hover) and (pointer: fine)").matches) setExpanded(true);
-  };
-
-  const handleBlur = (event: FocusEvent<HTMLElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) scheduleCollapse();
-  };
-
   const handleKeyDown = (event: KeyboardEvent<HTMLElement>) => {
     if (event.key !== "Escape") return;
-    setProfileOpen(false);
-    if (!railRef.current?.contains(document.activeElement)) setExpanded(false);
+    if (profileOpen) {
+      setProfileOpen(false);
+      return;
+    }
+    if (previewOpen) {
+      onClosePreview();
+      window.requestAnimationFrame(() => brandRef.current?.focus());
+    }
   };
 
   const closeAfterNavigate = () => {
+    clearCapsuleTimers();
+    setCapsuleId(null);
     setProfileOpen(false);
+    if (previewOpen) onClosePreview();
     onNavigate?.();
+  };
+
+  const pinMenu = () => {
+    onDesktopPreferenceChange("pinned");
+    onClosePreview();
+  };
+
+  const unpinMenu = () => {
+    onDesktopPreferenceChange("compact");
+    window.requestAnimationFrame(() => brandRef.current?.focus());
   };
 
   return (
     <aside
       ref={railRef}
-      className={`cr-live-rail-wrap ${expanded || profileOpen ? "is-expanded" : ""}`}
+      className={`cr-live-rail-wrap is-${presentation} ${fullPanel ? "is-full" : ""}`}
       aria-label="Панель Shifty"
-      onPointerEnter={handlePointerEnter}
-      onPointerLeave={scheduleCollapse}
-      onFocusCapture={() => { cancelCollapse(); setExpanded(true); }}
-      onBlurCapture={handleBlur}
+      data-navigation-presentation={presentation}
       onKeyDown={handleKeyDown}
     >
       <div className="cr-live-rail-surface">
-        <div className="cr-live-logo" aria-label="Shifty">
-          <span className="cr-live-logo-icon"><ShiftyMark pulse={logoPulse} /></span>
-          <span className="cr-live-wordmark">Shifty</span>
-        </div>
+        {presentation === "pinned" ? (
+          <div className="cr-live-brand" aria-label="Shifty">
+            <span className="cr-live-logo-icon"><ShiftyMark pulse={logoPulse} /></span>
+            <span className="cr-live-wordmark">Shifty</span>
+          </div>
+        ) : (
+          <button
+            ref={brandRef}
+            type="button"
+            className="cr-live-brand cr-live-brand-trigger"
+            aria-label={previewOpen ? "Закрыть меню" : "Открыть меню"}
+            aria-expanded={previewOpen}
+            onClick={onTogglePreview}
+          >
+            <span className="cr-live-logo-icon"><ShiftyMark pulse={logoPulse} /></span>
+            <span className="cr-live-wordmark">Shifty</span>
+          </button>
+        )}
+
+        {presentation === "preview" && (
+          <div className="cr-live-pin-wrap">
+            <button
+              type="button"
+              className="cr-live-pin-button"
+              aria-label={pinnedLayoutAllowed ? "Закрепить меню" : "Закрепление доступно на экранах от 1200 пикселей"}
+              aria-disabled={!pinnedLayoutAllowed}
+              onClick={() => { if (pinnedLayoutAllowed) pinMenu(); }}
+            >
+              <Pin size={17} aria-hidden="true" />
+            </button>
+            <span className="cr-pin-tooltip" role="tooltip">{pinnedLayoutAllowed ? "Закрепить меню" : "Доступно от 1200 px"}</span>
+          </div>
+        )}
 
         <div className="cr-live-nav-region">
           <nav className="cr-live-nav-list" aria-label="Основная навигация">
             {primaryNavigation.map(item => (
-              <NavigationItem key={item.id} item={item} active={item.id === activeItem.id} count={wishesCount} variant="rail" onNavigate={closeAfterNavigate} />
+              <div
+                className="cr-live-nav-slot"
+                key={item.id}
+                onPointerEnter={event => openCapsuleWithIntent(item.id, event)}
+                onPointerLeave={closeCapsuleWithIntent}
+              >
+                <NavigationItem
+                  item={item}
+                  active={item.id === activeItem.id}
+                  count={wishesCount}
+                  variant="rail"
+                  fullPanel={fullPanel}
+                  capsuleOpen={capsuleId === item.id}
+                  onNavigate={closeAfterNavigate}
+                  onFocus={() => { clearCapsuleTimers(); if (!fullPanel) setCapsuleId(item.id); }}
+                  onBlur={event => { if (!event.currentTarget.parentElement?.contains(event.relatedTarget)) setCapsuleId(null); }}
+                />
+              </div>
             ))}
           </nav>
         </div>
 
-        <div className="cr-live-profile-wrap">
-          <button
-            type="button"
-            className="cr-live-profile"
-            aria-label="Открыть меню профиля"
-            aria-haspopup="menu"
-            aria-expanded={profileOpen}
-            onClick={() => { setProfileOpen(value => !value); setExpanded(true); }}
-          >
-            <span className="cr-live-avatar" aria-hidden="true">МК</span>
-            <span className="cr-live-profile-copy"><strong>Менеджер команды</strong><span>Общий кабинет</span></span>
-          </button>
-          {profileOpen && (
-            <div className="cr-profile-menu" role="menu" aria-label="Меню профиля">
-              <div className="cr-profile-menu-head"><strong>Менеджер команды</strong><span>Демо-аккаунт</span></div>
-              <Link to="/app/settings#account" role="menuitem" onClick={closeAfterNavigate}><Settings size={17} aria-hidden="true" /><span>Настройки аккаунта</span></Link>
-              <button type="button" role="menuitem" onClick={onLogout}><LogOut size={17} aria-hidden="true" /><span>Выйти</span></button>
-            </div>
+        <div className="cr-live-footer">
+          {presentation === "pinned" && (
+            <button type="button" className="cr-live-unpin" onClick={unpinMenu} aria-label="Открепить меню">
+              <PinOff size={17} aria-hidden="true" /><span>Открепить</span>
+            </button>
           )}
+          <div className="cr-live-profile-wrap">
+            <button
+              type="button"
+              className="cr-live-profile"
+              aria-label="Открыть меню профиля"
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+              onClick={() => setProfileOpen(value => !value)}
+            >
+              <span className="cr-live-avatar" aria-hidden="true">МК</span>
+              <span className="cr-live-profile-copy"><strong>Менеджер команды</strong><span>Общий кабинет</span></span>
+            </button>
+            {profileOpen && (
+              <div className="cr-profile-menu" role="menu" aria-label="Меню профиля">
+                <div className="cr-profile-menu-head"><strong>Менеджер команды</strong><span>Демо-аккаунт</span></div>
+                <Link to="/app/settings#account" role="menuitem" onClick={closeAfterNavigate}><Settings size={17} aria-hidden="true" /><span>Настройки аккаунта</span></Link>
+                <button type="button" role="menuitem" onClick={onLogout}><LogOut size={17} aria-hidden="true" /><span>Выйти</span></button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </aside>
@@ -188,10 +284,18 @@ function MobileShiftyDock({ pathname, wishesCount, onNavigate }: Props) {
 }
 
 export function AdaptiveNavigation(props: Props) {
+  const mode = useDesktopNavigationMode(props.desktopPreference, props.pathname);
+
+  if (mode.presentation === "dock") return <MobileShiftyDock {...props} />;
+
   return (
-    <>
-      <DesktopLiveRail {...props} />
-      <MobileShiftyDock {...props} />
-    </>
+    <DesktopLiveRail
+      {...props}
+      presentation={mode.presentation}
+      pinnedLayoutAllowed={mode.pinnedLayoutAllowed}
+      previewOpen={mode.previewOpen}
+      onTogglePreview={mode.togglePreview}
+      onClosePreview={mode.closePreview}
+    />
   );
 }

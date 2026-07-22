@@ -116,10 +116,12 @@ export function ControlRoom({ dark, language, theme, onThemeChange, onLogout }: 
     : <SettingsPage theme={theme} preferences={preferences} onTheme={onThemeChange} onPreferences={updatePreferences} onLogout={onLogout} />;
 
   return (
-    <div className="cr-root">
+    <div className={`cr-root ${preferences.desktopNavigation === "pinned" ? "cr-nav-prefers-pinned" : ""}`}>
       <AdaptiveNavigation
         pathname={path}
         wishesCount={newWishesCount}
+        desktopPreference={preferences.desktopNavigation}
+        onDesktopPreferenceChange={desktopNavigation => updatePreferences({ desktopNavigation })}
         onNavigate={() => setNotificationOpen(false)}
         onLogout={onLogout}
       />

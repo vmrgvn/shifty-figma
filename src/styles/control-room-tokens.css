@@ -31,7 +31,10 @@
   --app-dock-max-width: 430px;
   --app-dock-edge-gap: 12px;
   --app-shell-content-inline-start: calc(var(--app-rail-edge-gap) * 2 + var(--app-rail-collapsed-width));
+  --app-shell-content-inline-start-pinned: calc(var(--app-rail-edge-gap) * 2 + var(--app-rail-expanded-width));
   --app-shell-content-bottom-clearance: 0px;
+  --app-nav-capsule-max-width: 210px;
+  --app-nav-transition-duration: 210ms;
   --app-nav-active-bg: #ede9fe;
   --app-nav-active-fg: #6d28d9;
   --app-nav-muted-fg: #766d80;
