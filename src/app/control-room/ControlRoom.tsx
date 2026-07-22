@@ -1,4 +1,4 @@
-import { Bell, CalendarDays, Gauge, LogOut, Settings, SlidersHorizontal, UsersRound, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { GeneratedSchedule, ScheduleDraft } from "../../domain/schedule/types";
@@ -25,6 +25,8 @@ import { ScheduleWorkspacePage } from "./pages/ScheduleWorkspacePage";
 import { SchedulesPage } from "./pages/SchedulesPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { WishesPage } from "./pages/WishesPage";
+import { AdaptiveNavigation } from "./navigation/AdaptiveNavigation";
+import { activeNavigationItem } from "./navigation/navigationModel";
 
 interface Props {
   dark: boolean;
@@ -36,10 +38,6 @@ interface Props {
 }
 
 type ToastState = { id: number; message: string } | null;
-
-function Logo() {
-  return <div className="cr-logo"><span className="cr-logo-mark" aria-hidden="true">{Array.from({ length: 9 }, (_, i) => <span key={i} />)}</span><span>Shifty</span></div>;
-}
 
 export function ControlRoom({ dark, language, theme, onThemeChange, onLogout }: Props) {
   const location = useLocation();
@@ -67,19 +65,14 @@ export function ControlRoom({ dark, language, theme, onThemeChange, onLogout }: 
   useEffect(() => { void (async () => { await bootstrapApplicationData(); await reload(); setLoading(false); })(); }, [reload]);
 
   const path = location.pathname;
-  const section = path === "/app" ? "overview" : path.startsWith("/app/schedules") ? "schedules" : path.startsWith("/app/wishes") ? "wishes" : path.startsWith("/app/settings") ? "settings" : "overview";
+  const section = activeNavigationItem(path).id;
   const unread = notifications.filter(item => !item.read).length;
   const workspaceMatch = path.match(/^\/app\/schedules\/([^/]+)$/);
   const printMatch = path.match(/^\/print\/([^/]+)$/);
   const selectedSchedule = schedules.find(item => item.id === (workspaceMatch?.[1] ?? printMatch?.[1]));
   const creating = path === "/app/schedules/new";
 
-  const navItems = [
-    { id: "overview", path: "/app", label: "Обзор", Icon: Gauge },
-    { id: "schedules", path: "/app/schedules", label: "Расписания", Icon: CalendarDays },
-    { id: "wishes", path: "/app/wishes", label: "Пожелания", Icon: UsersRound, count: wishes.filter(item => item.status === "new" || item.status === "needs_review").length },
-    { id: "settings", path: "/app/settings", label: "Настройки", Icon: Settings },
-  ];
+  const newWishesCount = wishes.filter(item => item.status === "new" || item.status === "needs_review").length;
 
   const createSchedule = () => { legacyWizardDraftStore.remove(); navigate("/app/schedules/new"); };
   const editSchedule = async (id: string) => {
@@ -122,5 +115,49 @@ export function ControlRoom({ dark, language, theme, onThemeChange, onLogout }: 
     : section === "wishes" ? <WishesPage wishes={wishes} onSave={wish => void saveWish(wish)} onOpenSchedule={id => navigate(`/app/schedules/${id}`)} />
     : <SettingsPage theme={theme} preferences={preferences} onTheme={onThemeChange} onPreferences={updatePreferences} onLogout={onLogout} />;
 
-  return <div className="cr-root"><div className="cr-shell"><aside className="cr-sidebar"><Logo /><div className="cr-capability"><SlidersHorizontal size={13} /> Управление расписаниями</div><nav className="cr-nav" aria-label="Основная навигация">{navItems.map(item => <button key={item.id} className={`cr-nav-button ${section === item.id ? "is-active" : ""}`} onClick={() => navigate(item.path)} title={item.label}><item.Icon size={17} /><span>{item.label}</span>{!!item.count && <span className="cr-count">{item.count}</span>}</button>)}</nav><div className="cr-account"><div className="cr-account-row"><div className="cr-avatar">МК</div><div className="cr-account-copy"><strong>Менеджер команды</strong><span>Общий кабинет</span></div><button className="cr-icon-button" onClick={onLogout} title="Выйти" aria-label="Выйти"><LogOut size={15} /></button></div></div></aside><div className="cr-main"><header className="cr-topbar"><div className="cr-topbar-title"><strong>{pageTitle}</strong><span>Shifty Control Room</span></div><div className="cr-notification-wrap"><button className="cr-icon-button" onClick={() => setNotificationOpen(value => !value)} aria-label={`Уведомления${unread ? `: ${unread} непрочитанных` : ""}`}><Bell size={16} />{unread > 0 && <i className="cr-notification-dot" />}</button>{notificationOpen && <div className="cr-notification-panel"><div className="cr-notification-head"><strong>Уведомления</strong><div><button className="cr-ghost" onClick={() => void markAllRead()}>Прочитать все</button><button className="cr-icon-button" onClick={() => setNotificationOpen(false)} aria-label="Закрыть уведомления"><X size={14} /></button></div></div>{notifications.length ? notifications.map(item => <button className={`cr-notification-item ${item.read ? "" : "is-unread"}`} key={item.id} onClick={() => void openNotification(item)}><i className={`cr-tone-dot ${item.tone}`} /><span><strong style={{ display: "block", fontSize: 12 }}>{item.title}</strong><span style={{ color: "var(--cr-muted)", display: "block", fontSize: 11, marginTop: 3 }}>{item.description}</span></span></button>) : <div className="cr-empty" style={{ minHeight: 180 }}><p>Уведомлений пока нет.</p></div>}</div>}</div></header>{content}</div></div><nav className="cr-mobile-nav" aria-label="Мобильная навигация">{navItems.map(item => <button key={item.id} className={section === item.id ? "is-active" : ""} onClick={() => navigate(item.path)}><item.Icon size={18} /><span>{item.label}</span></button>)}</nav>{toast && <div role="status" style={{ position: "fixed", right: 18, bottom: 84, zIndex: 130, padding: "11px 14px", borderRadius: 10, background: "var(--cr-text)", color: "var(--cr-canvas)", boxShadow: "var(--cr-shadow)", fontSize: 12 }}>{toast.message}</div>}</div>;
+  return (
+    <div className="cr-root">
+      <AdaptiveNavigation
+        pathname={path}
+        wishesCount={newWishesCount}
+        onNavigate={() => setNotificationOpen(false)}
+        onLogout={onLogout}
+      />
+      <div className="cr-shell">
+        <div className="cr-main">
+          <header className="cr-topbar">
+            <div className="cr-topbar-title"><strong>{pageTitle}</strong><span>Shifty Control Room</span></div>
+            <div className="cr-notification-wrap">
+              <button className="cr-icon-button" onClick={() => setNotificationOpen(value => !value)} aria-label={`Уведомления${unread ? `: ${unread} непрочитанных` : ""}`}>
+                <Bell size={16} />
+                {unread > 0 && <i className="cr-notification-dot" />}
+              </button>
+              {notificationOpen && (
+                <div className="cr-notification-panel">
+                  <div className="cr-notification-head">
+                    <strong>Уведомления</strong>
+                    <div>
+                      <button className="cr-ghost" onClick={() => void markAllRead()}>Прочитать все</button>
+                      <button className="cr-icon-button" onClick={() => setNotificationOpen(false)} aria-label="Закрыть уведомления"><X size={14} /></button>
+                    </div>
+                  </div>
+                  {notifications.length ? notifications.map(item => (
+                    <button className={`cr-notification-item ${item.read ? "" : "is-unread"}`} key={item.id} onClick={() => void openNotification(item)}>
+                      <i className={`cr-tone-dot ${item.tone}`} />
+                      <span>
+                        <strong style={{ display: "block", fontSize: 12 }}>{item.title}</strong>
+                        <span style={{ color: "var(--cr-muted)", display: "block", fontSize: 11, marginTop: 3 }}>{item.description}</span>
+                      </span>
+                    </button>
+                  )) : <div className="cr-empty" style={{ minHeight: 180 }}><p>Уведомлений пока нет.</p></div>}
+                </div>
+              )}
+            </div>
+          </header>
+          {content}
+        </div>
+      </div>
+      {toast && <div className="cr-toast" role="status">{toast.message}</div>}
+    </div>
+  );
 }
