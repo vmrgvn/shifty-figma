@@ -18,11 +18,14 @@ export interface AppNotification {
   tone: "info" | "warning" | "success";
 }
 
+export type DesktopNavigationPreference = "compact" | "pinned";
+
 export interface AppPreferences {
   theme: "system" | "dark" | "light";
   language: "ru";
   timezone: string;
   weekStartsOn: 1;
+  desktopNavigation: DesktopNavigationPreference;
   notifications: { wishes: boolean; generation: boolean; issues: boolean; publication: boolean };
 }
 
@@ -49,6 +52,7 @@ const defaultPreferences: AppPreferences = {
   language: "ru",
   timezone: "Asia/Yekaterinburg",
   weekStartsOn: 1,
+  desktopNavigation: "compact",
   notifications: { wishes: true, generation: true, issues: true, publication: true },
 };
 
@@ -73,7 +77,13 @@ function normalizeState(value: unknown): AppState {
     schedules: Array.isArray(input.schedules) ? input.schedules.filter(item => item?.schemaVersion === 1) : [],
     wishes: Array.isArray(input.wishes) ? input.wishes : [],
     notifications: Array.isArray(input.notifications) ? input.notifications : [],
-    preferences: { ...fallback.preferences, ...(input.preferences ?? {}), language: "ru", notifications: { ...fallback.preferences.notifications, ...(input.preferences?.notifications ?? {}) } },
+    preferences: {
+      ...fallback.preferences,
+      ...(input.preferences ?? {}),
+      language: "ru",
+      desktopNavigation: input.preferences?.desktopNavigation === "pinned" ? "pinned" : "compact",
+      notifications: { ...fallback.preferences.notifications, ...(input.preferences?.notifications ?? {}) },
+    },
   };
 }
 
