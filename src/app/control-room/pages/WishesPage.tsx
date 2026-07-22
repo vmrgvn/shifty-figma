@@ -1,6 +1,7 @@
 import { ArrowLeft, CalendarDays, Check, CircleHelp, ExternalLink, X } from "lucide-react";
 import { useMemo, useState, type ReactNode } from "react";
 import type { EmployeeWish, WishStatus } from "../../../domain/wishes/types";
+import type { LanguageCode } from "../../components/NavMenu";
 import { TopLevelPageLayout } from "../components/PageLayout";
 import { formatDate } from "../scheduleUtils";
 
@@ -9,12 +10,64 @@ type Filter = "all" | "new" | "needs_review" | "included" | "not_included";
 const STATUS_COPY: Record<WishStatus, string> = { new: "Новое", needs_review: "Нужно проверить", included: "Учтено", partially_included: "Учтено частично", not_included: "Не учтено" };
 const TYPE_COPY = { unavailability: "Недоступность", preferred_time: "Время", day_off: "Выходной", work_with: "Работать вместе", work_separately: "Работать раздельно", avoid_shift: "Избегать смены", free_text: "Другое" };
 
-export function WishesPage({ notification, wishes, onCreate, onSave, onOpenSchedule }: { notification: ReactNode; wishes: EmployeeWish[]; onCreate: () => void; onSave: (wish: EmployeeWish) => void; onOpenSchedule: (id: string) => void }) {
+interface Props {
+  language: LanguageCode;
+  notification: ReactNode;
+  wishes: EmployeeWish[];
+  onCreate: () => void;
+  onSave: (wish: EmployeeWish) => void;
+  onOpenSchedule: (id: string) => void;
+}
+
+export function WishesPage({ language, notification, wishes, onCreate, onSave, onOpenSchedule }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(() => window.innerWidth >= 768 ? wishes[0]?.id ?? null : null);
   const filtered = useMemo(() => wishes.filter(item => filter === "all" || (filter === "included" ? item.status === "included" || item.status === "partially_included" : item.status === filter)), [filter, wishes]);
   const selected = wishes.find(item => item.id === selectedId);
-  const updateStatus = (status: WishStatus) => { if (!selected) return; onSave({ ...selected, status }); };
+  const updateStatus = (status: WishStatus) => { if (selected) onSave({ ...selected, status }); };
   const filters: Array<[Filter, string]> = [["all", "Все"], ["new", "Новые"], ["needs_review", "Нужно проверить"], ["included", "Учтено"], ["not_included", "Не учтено"]];
-  return <TopLevelPageLayout width="default" title="Пожелания" description="Проверяйте, как просьбы сотрудников связаны с расписанием." notification={notification} onCreateSchedule={onCreate}><div className="cr-panel cr-wishes"><section className="cr-wish-list"><div className="cr-filter-row">{filters.map(([value, label]) => <button className={`cr-filter ${filter === value ? "is-active" : ""}`} key={value} onClick={() => setFilter(value)}>{label}</button>)}</div>{filtered.map(wish => <button className={`cr-wish-row ${selectedId === wish.id ? "is-active" : ""}`} key={wish.id} onClick={() => setSelectedId(wish.id)}><div className="cr-wish-row-head"><strong>{wish.employeeName}</strong><span className={`cr-status ${wish.status === "included" ? "ready" : wish.status === "not_included" ? "failed" : wish.status === "needs_review" ? "needs_review" : "draft"}`}>{STATUS_COPY[wish.status]}</span></div><p>{wish.text}</p><span style={{ color: "var(--cr-muted)", fontSize: 10 }}>{TYPE_COPY[wish.type]} · {formatDate(wish.createdAt.slice(0,10))}</span></button>)}{!filtered.length && <div className="cr-empty"><div><CircleHelp size={26} color="var(--cr-muted)" /><h2>В этой группе пусто</h2><p>Попробуйте другой фильтр.</p></div></div>}</section>{selected && <section className="cr-wish-detail"><button className="cr-ghost cr-mobile-only" onClick={() => setSelectedId(null)}><ArrowLeft size={14} /> К списку</button><div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12 }}><div><h2>{selected.employeeName}</h2><span className={`cr-status ${selected.status === "included" ? "ready" : selected.status === "not_included" ? "failed" : "needs_review"}`}>{STATUS_COPY[selected.status]}</span></div><button className="cr-icon-button cr-mobile-only" onClick={() => setSelectedId(null)} aria-label="Закрыть пожелание"><X size={15} /></button></div><blockquote>«{selected.text}»</blockquote>{selected.parsedInterpretation ? <div className="cr-interpretation"><span>Демо-интерпретация · Shifty понял это так</span><strong>{selected.parsedInterpretation.summary} · {selected.parsedInterpretation.strength === "hard" ? "обязательное условие" : "мягкое пожелание"}</strong><p style={{ color: "var(--cr-muted)", fontSize: 11, margin: "7px 0 0" }}>Структура задана в локальной фикстуре — это не результат реального NLP.</p></div> : <div className="cr-banner warning"><CircleHelp size={15} /><span>Структурированная интерпретация ещё не задана. Проверьте пожелание вручную.</span></div>}{selected.outcome && <div className="cr-outcome"><strong>{selected.outcome.summary}</strong><br />{selected.outcome.explanation}</div>}{selected.appliesFrom && <p style={{ color: "var(--cr-muted)", fontSize: 12 }}><CalendarDays size={13} /> Период: {formatDate(selected.appliesFrom)}{selected.appliesTo && selected.appliesTo !== selected.appliesFrom ? ` — ${formatDate(selected.appliesTo)}` : ""}</p>}<div className="cr-wish-actions"><button className="cr-primary" onClick={() => updateStatus("included")}><Check size={14} /> Учесть</button><button className="cr-secondary" onClick={() => updateStatus("not_included")}>Не учитывать</button>{selected.relatedScheduleIds[0] && <button className="cr-ghost" onClick={() => onOpenSchedule(selected.relatedScheduleIds[0])}><ExternalLink size={13} /> Открыть в расписании</button>}</div></section>}</div></TopLevelPageLayout>;
+
+  return (
+    <TopLevelPageLayout page="preferences" language={language} width="default" notification={notification} onCreateSchedule={onCreate}>
+      <div className="cr-panel cr-wishes">
+        <section className="cr-wish-list">
+          <div className="cr-filter-row">
+            {filters.map(([value, label]) => <button className={`cr-filter ${filter === value ? "is-active" : ""}`} key={value} onClick={() => setFilter(value)}>{label}</button>)}
+          </div>
+          {filtered.map(wish => (
+            <button className={`cr-wish-row ${selectedId === wish.id ? "is-active" : ""}`} key={wish.id} onClick={() => setSelectedId(wish.id)}>
+              <div className="cr-wish-row-head"><strong>{wish.employeeName}</strong><span className={`cr-status ${wish.status === "included" ? "ready" : wish.status === "not_included" ? "failed" : wish.status === "needs_review" ? "needs_review" : "draft"}`}>{STATUS_COPY[wish.status]}</span></div>
+              <p>{wish.text}</p>
+              <span style={{ color: "var(--cr-muted)", fontSize: 10 }}>{TYPE_COPY[wish.type]} · {formatDate(wish.createdAt.slice(0, 10))}</span>
+            </button>
+          ))}
+          {!filtered.length && <div className="cr-empty"><div><CircleHelp size={26} color="var(--cr-muted)" /><h2>В этой группе пусто</h2><p>Попробуйте другой фильтр.</p></div></div>}
+        </section>
+        {selected && (
+          <section className="cr-wish-detail">
+            <button className="cr-ghost cr-mobile-only" onClick={() => setSelectedId(null)}><ArrowLeft size={14} /> К списку</button>
+            <div style={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 12 }}>
+              <div><h2>{selected.employeeName}</h2><span className={`cr-status ${selected.status === "included" ? "ready" : selected.status === "not_included" ? "failed" : "needs_review"}`}>{STATUS_COPY[selected.status]}</span></div>
+              <button className="cr-icon-button cr-mobile-only" onClick={() => setSelectedId(null)} aria-label="Закрыть пожелание"><X size={15} /></button>
+            </div>
+            <blockquote>«{selected.text}»</blockquote>
+            {selected.parsedInterpretation ? (
+              <div className="cr-interpretation">
+                <span>Демо-интерпретация · Shifty понял это так</span>
+                <strong>{selected.parsedInterpretation.summary} · {selected.parsedInterpretation.strength === "hard" ? "обязательное условие" : "мягкое пожелание"}</strong>
+                <p style={{ color: "var(--cr-muted)", fontSize: 11, margin: "7px 0 0" }}>Структура задана в локальной фикстуре — это не результат реального NLP.</p>
+              </div>
+            ) : <div className="cr-banner warning"><CircleHelp size={15} /><span>Структурированная интерпретация ещё не задана. Проверьте пожелание вручную.</span></div>}
+            {selected.outcome && <div className="cr-outcome"><strong>{selected.outcome.summary}</strong><br />{selected.outcome.explanation}</div>}
+            {selected.appliesFrom && <p style={{ color: "var(--cr-muted)", fontSize: 12 }}><CalendarDays size={13} /> Период: {formatDate(selected.appliesFrom)}{selected.appliesTo && selected.appliesTo !== selected.appliesFrom ? ` — ${formatDate(selected.appliesTo)}` : ""}</p>}
+            <div className="cr-wish-actions">
+              <button className="cr-primary" onClick={() => updateStatus("included")}><Check size={14} /> Учесть</button>
+              <button className="cr-secondary" onClick={() => updateStatus("not_included")}>Не учитывать</button>
+              {selected.relatedScheduleIds[0] && <button className="cr-ghost" onClick={() => onOpenSchedule(selected.relatedScheduleIds[0])}><ExternalLink size={13} /> Открыть в расписании</button>}
+            </div>
+          </section>
+        )}
+      </div>
+    </TopLevelPageLayout>
+  );
 }

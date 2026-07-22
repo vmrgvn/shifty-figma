@@ -1,4 +1,5 @@
 import type { GeneratedSchedule, ScheduleStatus } from "../../domain/schedule/types";
+import type { ControlRoomLocale } from "./localization";
 
 export const WEEKDAY_SHORT = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
@@ -15,23 +16,31 @@ export function datesBetween(start: string, end: string): string[] {
   return values;
 }
 
-export function formatDate(value: string, options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" }): string {
-  return new Date(`${value}T12:00:00`).toLocaleDateString("ru-RU", options).replace(" г.", "");
+export function formatDate(value: string, options: Intl.DateTimeFormatOptions = { day: "numeric", month: "short" }, locale: ControlRoomLocale = "ru"): string {
+  return new Date(`${value}T12:00:00`).toLocaleDateString(locale === "ru" ? "ru-RU" : "en-US", options).replace(" г.", "");
 }
 
-export function formatPeriod(schedule: Pick<GeneratedSchedule, "period">): string {
+export function formatPeriod(schedule: Pick<GeneratedSchedule, "period">, locale: ControlRoomLocale = "ru"): string {
   const start = new Date(`${schedule.period.start}T12:00:00`);
   const end = new Date(`${schedule.period.end}T12:00:00`);
-  if (start.getMonth() === end.getMonth()) return `${start.getDate()}–${end.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" }).replace(" г.", "")}`;
-  return `${formatDate(schedule.period.start, { day: "numeric", month: "short" })} — ${formatDate(schedule.period.end, { day: "numeric", month: "short", year: "numeric" })}`;
+  const intlLocale = locale === "ru" ? "ru-RU" : "en-US";
+  if (start.getMonth() === end.getMonth()) {
+    if (locale === "en") return `${start.toLocaleDateString(intlLocale, { month: "long" })} ${start.getDate()}–${end.getDate()}, ${end.getFullYear()}`;
+    return `${start.getDate()}–${end.toLocaleDateString(intlLocale, { day: "numeric", month: "long", year: "numeric" }).replace(" г.", "")}`;
+  }
+  return `${formatDate(schedule.period.start, { day: "numeric", month: "short" }, locale)} — ${formatDate(schedule.period.end, { day: "numeric", month: "short", year: "numeric" }, locale)}`;
 }
 
 export function weekdayLabel(value: string): string {
   return new Date(`${value}T12:00:00`).toLocaleDateString("ru-RU", { weekday: "short" }).replace(".", "");
 }
 
-export function statusLabel(status: ScheduleStatus): string {
-  return ({ draft: "Черновик", generating: "Создаётся", needs_review: "На проверке", ready: "Готово", published: "Опубликовано", archived: "В архиве", failed: "Ошибка" } as Record<ScheduleStatus, string>)[status];
+export function statusLabel(status: ScheduleStatus, locale: ControlRoomLocale = "ru"): string {
+  const labels: Record<ControlRoomLocale, Record<ScheduleStatus, string>> = {
+    ru: { draft: "Черновик", generating: "Создаётся", needs_review: "На проверке", ready: "Готово", published: "Опубликовано", archived: "В архиве", failed: "Ошибка" },
+    en: { draft: "Draft", generating: "Generating", needs_review: "Needs review", ready: "Ready", published: "Published", archived: "Archived", failed: "Failed" },
+  };
+  return labels[locale][status];
 }
 
 export function initials(name: string): string {

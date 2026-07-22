@@ -1,10 +1,11 @@
 import { Bell, Check, Globe2, LockKeyhole, MessageSquareText, ShieldCheck, Smartphone } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { AppPreferences } from "../../../data/repositories/localAppRepository";
-import type { ThemeMode } from "../../components/NavMenu";
+import type { LanguageCode, ThemeMode } from "../../components/NavMenu";
 import { TopLevelPageLayout } from "../components/PageLayout";
 
 interface Props {
+  language: LanguageCode;
   notification: ReactNode;
   onCreate: () => void;
   theme: ThemeMode;
@@ -14,7 +15,7 @@ interface Props {
   onLogout: () => void;
 }
 
-export function SettingsPage({ notification, onCreate, theme, preferences, onTheme, onPreferences, onLogout }: Props) {
+export function SettingsPage({ language, notification, onCreate, theme, preferences, onTheme, onPreferences, onLogout }: Props) {
   const [saved, setSaved] = useState(false);
   const showSaved = () => { setSaved(true); window.setTimeout(() => setSaved(false), 1300); };
   const savePreferences = (patch: Partial<AppPreferences>) => { onPreferences(patch); showSaved(); };
@@ -27,7 +28,7 @@ export function SettingsPage({ notification, onCreate, theme, preferences, onThe
   ];
 
   return (
-    <TopLevelPageLayout width="default" title="Настройки" description="Оформление, уведомления и параметры локального MVP." notification={notification} onCreateSchedule={onCreate}>
+    <TopLevelPageLayout page="settings" language={language} width="default" notification={notification} onCreateSchedule={onCreate}>
       {saved && <div className="cr-save-feedback" role="status"><Check size={13} aria-hidden="true" /> Сохранено</div>}
       <div className="cr-settings-content">
           <section id="appearance" className="cr-panel cr-setting-section">
