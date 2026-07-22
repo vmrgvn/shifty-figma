@@ -3,5 +3,6 @@
 @import './theme.css';
 @import './control-room-tokens.css';
 @import './control-room.css';
+@import './adaptive-navigation.css';
 @import './control-room-print.css';
 @import './globals.css';
