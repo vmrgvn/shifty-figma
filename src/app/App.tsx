@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ArrowRight } from "lucide-react";
+import { useLocation, useNavigate } from "react-router";
 import { AuthPage } from "./components/AuthPage";
 import { Wizard } from "./components/Wizard";
+import { Dashboard } from "./components/Dashboard";
 import { LanguageCode, NavMenu, ThemeMode } from "./components/NavMenu";
+import { importPendingPublicSchedule, preferencesRepository, preparePendingPublicSchedule } from "../data/repositories/localAppRepository";
 
 const themes = {
   dark: {
@@ -120,19 +123,17 @@ const copy: Record<
 };
 
 export default function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem("shifty-theme");
-    return saved === "dark" || saved === "light" || saved === "system" ? saved : "system";
+    return preferencesRepository.get().theme;
   });
   const [language, setLanguage] = useState<LanguageCode>(() => {
-    const saved = localStorage.getItem("shifty-language");
-    return saved && saved in copy ? (saved as LanguageCode) : "ru";
+    return "ru";
   });
   const [systemDark, setSystemDark] = useState(() =>
     window.matchMedia("(prefers-color-scheme: dark)").matches
   );
-  const [wizardOpen, setWizardOpen] = useState(false);
-  const [authOpen, setAuthOpen] = useState(false);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
@@ -148,21 +149,40 @@ export default function App() {
   const text = copy[language];
 
   useEffect(() => {
-    localStorage.setItem("shifty-theme", themeMode);
+    preferencesRepository.save({ theme: themeMode });
     document.documentElement.classList.toggle("dark", dark);
   }, [themeMode, dark]);
 
   useEffect(() => {
-    localStorage.setItem("shifty-language", language);
     document.documentElement.lang = language;
   }, [language]);
 
-  if (authOpen) {
-    return <AuthPage dark={dark} language={language} onBack={() => setAuthOpen(false)} />;
+  if (location.pathname.startsWith("/app") || location.pathname.startsWith("/print/")) {
+    return (
+      <Dashboard
+        dark={dark}
+        language={language}
+        theme={themeMode}
+        onThemeChange={setThemeMode}
+        onLanguageChange={setLanguage}
+        onLogout={() => navigate("/")}
+      />
+    );
   }
 
-  if (wizardOpen) {
-    return <Wizard dark={dark} language={language} onBack={() => setWizardOpen(false)} onSignUp={() => { setWizardOpen(false); setAuthOpen(true); }} theme={themeMode} onThemeChange={setThemeMode} onLanguageChange={setLanguage} />;
+  if (location.pathname === "/auth") {
+    return (
+      <AuthPage
+        dark={dark}
+        language={language}
+        onBack={() => navigate("/")}
+        onAuthSuccess={() => { void importPendingPublicSchedule().finally(() => navigate("/app")); }}
+      />
+    );
+  }
+
+  if (location.pathname === "/schedule/new") {
+    return <Wizard dark={dark} language={language} onBack={() => navigate("/")} onSignUp={() => { void preparePendingPublicSchedule().finally(() => navigate("/auth")); }} theme={themeMode} onThemeChange={setThemeMode} onLanguageChange={setLanguage} />;
   }
 
   return (
@@ -227,7 +247,7 @@ export default function App() {
           language={language}
           onThemeChange={setThemeMode}
           onLanguageChange={setLanguage}
-          onLoginClick={() => setAuthOpen(true)}
+          onLoginClick={() => navigate("/auth")}
         />
       </nav>
 
@@ -313,7 +333,7 @@ export default function App() {
               fontFamily: "inherit",
               whiteSpace: "nowrap",
             }}
-            onClick={() => setWizardOpen(true)}
+            onClick={() => navigate("/schedule/new")}
             onMouseEnter={(e) => {
               const el = e.currentTarget;
               el.style.boxShadow = "0 0 0 1px rgba(168,85,247,0.5), 0 12px 40px rgba(168,85,247,0.4)";

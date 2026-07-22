@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { NavMenu, ThemeMode } from "./NavMenu";
 import type { LanguageCode } from "./NavMenu";
+import { legacyWizardDraftStore } from "../../data/repositories/localAppRepository";
 
 // ─── Color tokens ─────────────────────────────────────────────────────────────
 function colors(dark: boolean) {
@@ -246,7 +247,7 @@ const wizardCopy: Record<LanguageCode, {
       employees: "Добавьте хотя бы одного сотрудника.",
       roles: "Добавьте хотя бы одну роль.",
       shifts: "Добавьте хотя бы одну смену.",
-      shiftTime: "Исправьте время смен: окончание должно быть позже начала.",
+      shiftTime: "Укажите время начала и окончания каждой смены. Ночная смена может заканчиваться на следующий день.",
       breakTime: "Исправьте время перерывов: окончание должно быть позже начала.",
       employeeRoles: "Назначьте роли всем сотрудникам.",
       employeeSettings: "Исправьте ошибки в настройках сотрудников.",
@@ -1096,7 +1097,7 @@ const wizardStepCopy: Record<LanguageCode, {
 
 // ─── Generation-done copy ─────────────────────────────────────────────────────
 const genCopy: Record<LanguageCode, { done: string; doneText: string; signUp: string; download: string }> = {
-  ru:  { done: "Готово! Расписание составлено",   doneText: "Создайте аккаунт, чтобы редактировать и поделиться. Или скачайте файл прямо сейчас.",        signUp: "Создать аккаунт", download: "Скачать Excel-файл"         },
+  ru:  { done: "Готово! Демо-расписание составлено", doneText: "Проверьте результат в рабочем кабинете. Распределение создано локальным демонстрационным алгоритмом.", signUp: "Открыть в кабинете", download: "Проверить исходные данные" },
   en:  { done: "Done! Schedule is ready",          doneText: "Create an account to edit and share. Or download the file right now.",                        signUp: "Create account",  download: "Download Excel file"        },
   kk:  { done: "Дайын! Кесте құрылды",            doneText: "Өңдеу және бөлісу үшін аккаунт жасаңыз. Немесе файлды қазір жүктеңіз.",                     signUp: "Аккаунт жасау",   download: "Excel файлын жүктеу"          },
   de:  { done: "Fertig! Dienstplan erstellt",      doneText: "Erstellen Sie ein Konto zum Bearbeiten und Teilen. Oder laden Sie die Datei jetzt herunter.", signUp: "Konto erstellen", download: "Excel-Datei herunterladen"  },
@@ -3233,14 +3234,14 @@ const TOTAL_STEPS = 4;
 interface WizardProps {
   dark: boolean; language: LanguageCode; onBack: () => void; onSignUp?: () => void;
   theme?: ThemeMode; onThemeChange?: (t: ThemeMode) => void; onLanguageChange?: (l: LanguageCode) => void;
+  signUpLabel?: string;
 }
 
-const DRAFT_KEY = "shifty-wizard-draft";
 function readDraft(): Record<string, unknown> {
-  try { return JSON.parse(localStorage.getItem(DRAFT_KEY) ?? "null") ?? {}; } catch { return {}; }
+  return legacyWizardDraftStore.read();
 }
 
-export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange, onLanguageChange }: WizardProps) {
+export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange, onLanguageChange, signUpLabel }: WizardProps) {
   const [step, setStep]           = useState<number>(() => { const d = readDraft(); return typeof d.step === "number" ? d.step : 1; });
   const [scheduleName, setScheduleName] = useState<string>(() => (readDraft().scheduleName as string) ?? "");
   const [employees, setEmployees] = useState<EmpData[]>(() => (readDraft().employees as EmpData[]) ?? []);
@@ -3271,7 +3272,7 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
   useEffect(() => { setContinueAttempted(false); }, [step]);
 
   useEffect(() => {
-    try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ step, employees, globalRoles, scheduleName, step3Data, step5Data })); }
+    try { legacyWizardDraftStore.write({ step, employees, globalRoles, scheduleName, step3Data, step5Data }); }
     catch {}
   }, [step, employees, globalRoles, scheduleName, step3Data, step5Data]);
 
@@ -3282,7 +3283,7 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
     if (!generationOpen || generationPhase !== "loading") return;
     setPhraseIdx(0);
     const iv = setInterval(() => setPhraseIdx(i => (i + 1) % loadingPhrases.length), 1900);
-    const t = setTimeout(() => setGenerationPhase("done"), 8000);
+    const t = setTimeout(() => setGenerationPhase("done"), 1800);
     return () => { clearTimeout(t); clearInterval(iv); };
   }, [generationOpen, generationPhase]);
 
@@ -3333,9 +3334,14 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
 
   const validationMessage =
     step === 1 && employees.length === 0 ? copy.validation.employees
+    : step === 2 && step3Data.mode === "weekly" && step3Data.weekDays.length === 0 ? "Выберите хотя бы один рабочий день."
+    : step === 2 && step3Data.mode === "custom" && (!step3Data.cycle.length || !step3Data.cycle.some(item => item.type === "work")) ? "Добавьте в цикл хотя бы один рабочий день."
     : step === 3 && !hasAnyShift(step3Data) ? copy.validation.shifts
     : step === 3 && hasInvalidShiftTimes(step3Data) ? copy.validation.shiftTime
+    : step === 4 && (!step5Data.periodStart || !step5Data.periodEnd) ? "Укажите начало и окончание периода расписания."
+    : step === 4 && step5Data.periodEnd < step5Data.periodStart ? "Дата окончания расписания должна быть позже даты начала."
     : step === 4 && hasInvalidBreakTimes(step5Data) ? copy.validation.breakTime
+    : step === 4 && hasEmployeeValidationErrors(employees) ? copy.validation.employeeSettings
     : "";
   const showValidationMessage = continueAttempted && !!validationMessage;
   const roleConflicts = step === TOTAL_STEPS ? hasRoleConflicts(employees, step3Data.configs) : [];
@@ -3436,10 +3442,10 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
             ))}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <a onClick={() => step > 1 ? setStep(s => s - 1) : onBack()}
-                style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s", visibility: step > 1 ? "visible" : "hidden" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s" }}
                 onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.7")}
                 onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              ><ChevronLeft size={14} strokeWidth={2.5} />{stepTitles[step - 2]}</a>
+              ><ChevronLeft size={14} strokeWidth={2.5} />{step > 1 ? stepTitles[step - 2] : "На главную"}</a>
               <button
                 onClick={() => {
                   if (validationMessage) { setContinueAttempted(true); return; }
@@ -3462,7 +3468,7 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
           {/* Mobile header */}
           <header style={{ position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px clamp(16px, 5vw, 48px)" }}>
             <button onClick={onBack} style={{ display: "inline-flex", alignItems: "center", gap: "6px", border: "none", background: "transparent", color: stepLabel, cursor: "pointer", fontFamily: "inherit", fontSize: "0.88rem" }}>
-              <House size={15} strokeWidth={1.8} />
+              <House size={15} strokeWidth={1.8} /> На главную
             </button>
             <span style={{ background: "linear-gradient(120deg,#c084fc,#ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: "1rem", fontWeight: 600, letterSpacing: "-0.02em" }}>Shifty</span>
           </header>
@@ -3527,10 +3533,10 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
             ))}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <a onClick={() => step > 1 ? setStep(s => s - 1) : onBack()}
-                style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s", visibility: step > 1 ? "visible" : "hidden" }}
+                style={{ display: "inline-flex", alignItems: "center", gap: "3px", color: stepLabel, fontSize: "0.875rem", cursor: "pointer", textDecoration: "none", transition: "opacity 0.15s" }}
                 onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = "0.7")}
                 onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = "1")}
-              ><ChevronLeft size={14} strokeWidth={2.5} />{stepTitles[step - 2]}</a>
+              ><ChevronLeft size={14} strokeWidth={2.5} />{step > 1 ? stepTitles[step - 2] : "На главную"}</a>
               <button
                 onClick={() => {
                   if (validationMessage) { setContinueAttempted(true); return; }
@@ -3571,14 +3577,15 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
                   <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18 }}
                     style={{ padding: "36px 28px 32px", textAlign: "center" }}
                   >
-                    {/* Spinning ring */}
-                    <div style={{ position: "relative", width: 72, height: 72, margin: "0 auto 24px" }}>
-                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
-                        style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "conic-gradient(from 0deg, #a855f7 0%, #ec4899 40%, transparent 70%)" }}
-                      />
-                      <div style={{ position: "absolute", inset: "5px", borderRadius: "50%", background: dark ? "#0f0d1a" : "#ffffff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <div style={{ width: 26, height: 26, borderRadius: "8px", background: "linear-gradient(135deg,#a855f7,#ec4899)" }} />
-                      </div>
+                    {/* Shifty schedule-block generation motif */}
+                    <div style={{ width: 82, height: 66, margin: "0 auto 24px", display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gridTemplateRows: "repeat(3, 1fr)", gap: "5px" }}>
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <motion.div key={i}
+                          animate={{ opacity: [0.2, 1, 0.42], scale: [0.9, 1, 0.96] }}
+                          transition={{ duration: 1.1, repeat: Infinity, delay: i * 0.055, ease: "easeInOut" }}
+                          style={{ borderRadius: "4px", background: i % 3 === 1 ? "linear-gradient(135deg,#ec4899,#be185d)" : "linear-gradient(135deg,#a855f7,#7c3aed)" }}
+                        />
+                      ))}
                     </div>
                     <AnimatePresence mode="wait">
                       <motion.p key={phraseIdx} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
@@ -3595,6 +3602,12 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
                         />
                       ))}
                     </div>
+                    <button
+                      onClick={() => setGenerationOpen(false)}
+                      style={{ marginTop: "22px", border: "none", background: "transparent", color: stepLabel, cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.8rem", fontWeight: 500, opacity: 0.7, transition: "opacity 0.15s" }}
+                      onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+                      onMouseLeave={e => (e.currentTarget.style.opacity = "0.7")}
+                    >Отмена</button>
                   </motion.div>
                 ) : (
                   <motion.div key="done" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
@@ -3611,7 +3624,7 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
                     {/* Sign up CTA */}
                     <button onClick={() => { setGenerationOpen(false); if (onSignUp) onSignUp(); else onBack(); }}
                       style={{ width: "100%", padding: "13px 16px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.95rem", fontWeight: 650, marginBottom: "10px", boxShadow: "0 6px 22px rgba(168,85,247,0.36)", letterSpacing: "-0.01em" }}
-                    >{genC.signUp}</button>
+                    >{signUpLabel ?? genC.signUp}</button>
                     {/* Download button — opens log modal */}
                     <button onClick={() => setLogOpen(true)}
                       style={{ width: "100%", padding: "11px 8px", borderRadius: "12px", border: `1px solid ${border}`, background: dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)", color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.84rem", fontWeight: 600, letterSpacing: "-0.01em", transition: "all 0.15s" }}
@@ -3626,7 +3639,7 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
         )}
       </AnimatePresence>
 
-      {/* Log modal — opened from "Скачать Excel" on done screen */}
+      {/* Structured source review */}
       <AnimatePresence>
         {logOpen && (() => {
           const allShifts = step3Data.configs.flatMap(c => c.shifts);
@@ -3662,7 +3675,7 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
                 style={{ position: "fixed", left: "50%", top: "50%", zIndex: 81, width: "min(540px, calc(100vw - 32px))", maxHeight: "calc(100dvh - 40px)", borderRadius: "22px", border: `1px solid ${border}`, background: dark ? "#0f0d1a" : "#ffffff", boxShadow: dark ? "0 32px 100px rgba(0,0,0,0.7)" : "0 28px 80px rgba(15,10,30,0.18)", display: "flex", flexDirection: "column", overflow: "hidden" }}
               >
                 <div style={{ padding: "24px 24px 0", flexShrink: 0 }}>
-                  <p style={{ color: dark ? "#f0ecff" : "#0f0a1e", fontSize: "1.1rem", fontWeight: 650, margin: "0 0 4px", letterSpacing: "-0.02em" }}>Лог расписания</p>
+                  <p style={{ color: dark ? "#f0ecff" : "#0f0a1e", fontSize: "1.1rem", fontWeight: 650, margin: "0 0 4px", letterSpacing: "-0.02em" }}>Проверка исходных данных</p>
                   <p style={{ color: stepLabel, fontSize: "0.8rem", margin: "0 0 14px", lineHeight: 1.5 }}>
                     {empN} {empWord}, {shiftN} {shiftWord}{rcN > 0 ? `, ${rcN} ${rcWord} по ролям` : ""}.
                   </p>
@@ -3692,12 +3705,12 @@ export function Wizard({ dark, language, onBack, onSignUp, theme, onThemeChange,
                     style={{ flex: 1, padding: "11px 8px", borderRadius: "12px", border: `1px solid ${border}`, background: dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)", color: dark ? "#c4b5fd" : "#7c3aed", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.875rem", fontWeight: 500, transition: "all 0.15s" }}
                     onMouseEnter={e => { e.currentTarget.style.background = dark ? "rgba(168,85,247,0.14)" : "rgba(168,85,247,0.1)"; }}
                     onMouseLeave={e => { e.currentTarget.style.background = dark ? "rgba(168,85,247,0.07)" : "rgba(168,85,247,0.05)"; }}
-                  >Продолжить</button>
-                  <button onClick={() => setLogOpen(false)}
+                    >Назад к результату</button>
+                  <button onClick={() => { setLogOpen(false); setGenerationOpen(false); if (onSignUp) onSignUp(); else onBack(); }}
                     style={{ flex: 2, padding: "11px 8px", borderRadius: "12px", border: "none", background: "linear-gradient(135deg,#a855f7,#ec4899)", color: "#fff", cursor: "pointer", fontFamily: "'DM Sans',sans-serif", fontSize: "0.875rem", fontWeight: 650, boxShadow: "0 4px 18px rgba(168,85,247,0.3)", transition: "all 0.15s" }}
                     onMouseEnter={e => { e.currentTarget.style.filter = "brightness(1.07)"; }}
                     onMouseLeave={e => { e.currentTarget.style.filter = "brightness(1)"; }}
-                  >Скачать Excel</button>
+                  >{signUpLabel ?? genC.signUp}</button>
                 </div>
               </motion.div>
             </>
