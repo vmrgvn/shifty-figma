@@ -34,4 +34,16 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return
+          if (id.includes('motion')) return 'motion'
+          if (id.includes('lucide-react')) return 'icons'
+          if (id.includes('react') || id.includes('scheduler')) return 'react'
+        },
+      },
+    },
+  },
 })

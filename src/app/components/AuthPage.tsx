@@ -7,6 +7,7 @@ interface AuthPageProps {
   dark: boolean;
   language: LanguageCode;
   onBack: () => void;
+  onAuthSuccess?: () => void;
 }
 
 // ─── Country data ─────────────────────────────────────────────────────────────
@@ -124,7 +125,7 @@ function palette(dark: boolean) {
 
 type Step = "phone" | "otp";
 
-export function AuthPage({ dark, onBack }: AuthPageProps) {
+export function AuthPage({ dark, onBack, onAuthSuccess }: AuthPageProps) {
   const [step,        setStep]        = useState<Step>("phone");
   const [country,     setCountry]     = useState<Country>(() => detectCountry());
   const [phone,       setPhone]       = useState("");
@@ -173,7 +174,7 @@ export function AuthPage({ dark, onBack }: AuthPageProps) {
     if (step !== "otp" || !otpDigits.every(d => d !== "")) return;
     const id = setTimeout(() => {
       if (otpDigits.join("") === "123456") {
-        onBack();
+        if (onAuthSuccess) onAuthSuccess(); else onBack();
       } else {
         setOtpError("Неверный код. Попробуйте ещё раз");
         setOtpDigits(Array(6).fill(""));
@@ -206,7 +207,7 @@ export function AuthPage({ dark, onBack }: AuthPageProps) {
     e.preventDefault();
     if (!otpComplete) return;
     if (otpDigits.join("") === "123456") {
-      onBack();
+      if (onAuthSuccess) onAuthSuccess(); else onBack();
     } else {
       setOtpError("Неверный код. Попробуйте ещё раз");
       setOtpDigits(Array(6).fill(""));
@@ -240,6 +241,19 @@ export function AuthPage({ dark, onBack }: AuthPageProps) {
     setTimeout(() => { setShowPicker(false); setSearch(""); }, 290);
   };
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (showPicker) { closePicker(); return; }
+      if (step === "otp") { setStep("phone"); setOtpDigits(Array(6).fill("")); setOtpError(null); return; }
+      onBack();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  // closePicker is stable per render; onBack is a prop — intentionally omitted from deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, showPicker]);
+
   const primaryBtn: CSSProperties = {
     width: "100%", height: "56px",
     display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
@@ -254,6 +268,21 @@ export function AuthPage({ dark, onBack }: AuthPageProps) {
     <div style={{ minHeight: "100dvh", position: "relative", background: c.bg, color: c.text, fontFamily: "'DM Sans', sans-serif", display: "flex", flexDirection: "column" }}>
 
       <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none", background: "radial-gradient(ellipse at 50% -5%, rgba(168,85,247,0.13), transparent 58%)" }} />
+
+      {/* На главную — shown only on phone step, lightweight back link */}
+      {step === "phone" && (
+        <div style={{ position: "relative", zIndex: 2, padding: "20px 24px 0", flexShrink: 0 }}>
+          <button
+            type="button"
+            onClick={onBack}
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px", border: "none", background: "transparent", color: c.sub, cursor: "pointer", fontFamily: "inherit", fontSize: "0.875rem", fontWeight: 500, padding: 0, transition: "color 0.15s" }}
+            onMouseEnter={e => (e.currentTarget.style.color = c.icon)}
+            onMouseLeave={e => (e.currentTarget.style.color = c.sub)}
+          >
+            <ArrowLeft size={15} /> На главную
+          </button>
+        </div>
+      )}
 
       {/* Back button lives outside <main> so it doesn't interfere with vertical centering */}
       {step === "otp" && (
@@ -374,6 +403,9 @@ export function AuthPage({ dark, onBack }: AuthPageProps) {
                 Мы отправили код на{" "}
                 <span style={{ color: c.text, fontWeight: 600 }}>{country.dial} {phone}</span>
               </p>
+              <div style={{ margin: "-18px 0 24px", padding: "10px 12px", borderRadius: "10px", background: c.codeBg, color: c.sub, fontSize: "0.78rem", lineHeight: 1.5 }}>
+                Демо-режим: используйте код <strong style={{ color: c.text, fontVariantNumeric: "tabular-nums" }}>123456</strong>. SMS пока не отправляется.
+              </div>
 
               <form onSubmit={submitOtp} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>

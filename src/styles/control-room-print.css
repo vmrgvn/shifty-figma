@@ -1,0 +1,13 @@
+.cr-print-root { min-height: 100dvh; background: #ece9f1; color: #17131d; font-family: "DM Sans", sans-serif; padding-bottom: 40px; }
+.cr-print-toolbar { position: sticky; top: 0; z-index: 5; min-height: 62px; padding: 10px 24px; background: #fff; border-bottom: 1px solid #e3dbea; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.cr-print-sheet { width: min(1120px, calc(100% - 32px)); margin: 24px auto; padding: 28px; background: #fff; box-shadow: 0 20px 60px rgba(33,22,44,.12); }
+.cr-print-head { display: flex; justify-content: space-between; gap: 24px; padding-bottom: 18px; border-bottom: 2px solid #6d28d9; }.cr-print-head h1 { margin: 10px 0 4px; font-size: 25px; }.cr-print-head p { margin: 0; color: #6f6578; font-size: 12px; }.cr-print-meta { text-align: right; font-size: 11px; color: #6f6578; }
+.cr-print-table-wrap { margin-top: 22px; overflow: auto; }.cr-print-table { width: 100%; border-collapse: collapse; font-size: 10px; }.cr-print-table th, .cr-print-table td { border: 1px solid #ded7e7; padding: 7px; vertical-align: top; }.cr-print-table th { background: #f5f1f8; text-align: left; }.cr-print-table tbody tr { break-inside: avoid; }.cr-print-shift { margin-bottom: 4px; padding-left: 5px; border-left: 3px solid var(--shift-color, #6d28d9); font-variant-numeric: tabular-nums; }.cr-print-legend { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 18px; font-size: 10px; }.cr-print-legend i { display: inline-block; width: 9px; height: 9px; margin-right: 4px; border-radius: 2px; }.cr-print-footer { margin-top: 28px; padding-top: 12px; border-top: 1px solid #ded7e7; color: #8a8093; font-size: 9px; display: flex; justify-content: space-between; }
+@media print {
+  @page { size: landscape; margin: 10mm; }
+  html, body { background: #fff !important; }
+  .cr-print-root { background: #fff; padding: 0; }
+  .cr-print-toolbar { display: none !important; }
+  .cr-print-sheet { width: 100%; margin: 0; padding: 0; box-shadow: none; }
+  .cr-print-table-wrap { overflow: visible; }
+}

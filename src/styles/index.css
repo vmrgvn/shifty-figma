@@ -1,4 +1,7 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+@import './control-room-tokens.css';
+@import './control-room.css';
+@import './control-room-print.css';
 @import './globals.css';

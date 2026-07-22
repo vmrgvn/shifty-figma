@@ -22,11 +22,11 @@ export function defaultStep3(): Step3Data {
 }
 
 function invalidTimeRange(from?: string, to?: string) {
-  return !!from && !!to && to <= from;
+  return !!from && !!to && to === from;
 }
 
 export function hasInvalidShiftTimes(data: Step3Data) {
-  return data.configs.some(config => config.shifts.some(shift => invalidTimeRange(shift.from, shift.to)));
+  return data.configs.some(config => config.shifts.some(shift => !shift.from || !shift.to || invalidTimeRange(shift.from, shift.to)));
 }
 
 // ─── Copy ─────────────────────────────────────────────────────────────────────

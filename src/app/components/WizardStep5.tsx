@@ -11,10 +11,17 @@ export interface Step5Data {
   daysOff:      DayOff5[];
   minRestHours: number;
   periodic:     boolean;
+  periodStart?: string;
+  periodEnd?:   string;
+  timezone?:    string;
 }
 
 export function defaultStep5(): Step5Data {
-  return { breaks: [], daysOff: [], minRestHours: 8, periodic: true };
+  const today = new Date();
+  const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+  const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+  const fmt = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+  return { breaks: [], daysOff: [], minRestHours: 8, periodic: true, periodStart: fmt(monday), periodEnd: fmt(sunday), timezone: "Asia/Yekaterinburg" };
 }
 
 function invalidTimeRange(from?: string, to?: string) {
@@ -315,6 +322,21 @@ export function StepFive({ data, onChange, scheduleName, onScheduleNameChange, s
               outline: "none", transition: "border-color 0.18s", boxSizing: "border-box",
             }}
           />
+        </Section>
+
+        <Section dark={dark}>
+          <SectionTitle icon={CalendarX} title="Период расписания" dark={dark}
+            desc="Выберите даты, для которых нужно составить расписание." />
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "8px" }}>
+            <label style={{ color: tc.sub, fontSize: "0.75rem" }}>Начало
+              <input type="date" value={data.periodStart ?? ""} onChange={e => onChange({ ...data, periodStart: e.target.value })}
+                style={{ display: "block", width: "100%", marginTop: "6px", background: tc.inputBg, border: `1.5px solid ${tc.inputBorder}`, borderRadius: "8px", padding: "8px 10px", color: tc.headline, fontFamily: "'DM Sans',sans-serif" }} />
+            </label>
+            <label style={{ color: tc.sub, fontSize: "0.75rem" }}>Окончание
+              <input type="date" value={data.periodEnd ?? ""} min={data.periodStart} onChange={e => onChange({ ...data, periodEnd: e.target.value })}
+                style={{ display: "block", width: "100%", marginTop: "6px", background: tc.inputBg, border: `1.5px solid ${tc.inputBorder}`, borderRadius: "8px", padding: "8px 10px", color: tc.headline, fontFamily: "'DM Sans',sans-serif" }} />
+            </label>
+          </div>
         </Section>
 
         {/* Breaks */}
