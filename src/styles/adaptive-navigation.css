@@ -446,13 +446,6 @@
 .cr-live-nav-item--dock.is-active .cr-live-nav-label { display: block; }
 .cr-live-nav-item--dock .cr-live-nav-badge { inset-block-start: 5px; inset-inline-end: 0; }
 
-.cr-topbar {
-  min-block-size: calc(68px + env(safe-area-inset-top, 0px));
-  block-size: auto;
-  padding-block-start: env(safe-area-inset-top, 0px);
-  padding-inline-start: max(28px, env(safe-area-inset-left, 0px));
-  padding-inline-end: max(28px, env(safe-area-inset-right, 0px));
-}
 .cr-toast {
   position: fixed;
   z-index: 130;
@@ -480,20 +473,6 @@
   }
   .cr-shell { padding-inline-start: 0; }
   .cr-main { min-width: 0; max-width: 100%; padding-block-end: var(--app-shell-content-bottom-clearance); }
-  .cr-topbar {
-    min-block-size: calc(58px + env(safe-area-inset-top, 0px));
-    padding-block-start: env(safe-area-inset-top, 0px);
-    padding-inline-start: max(14px, env(safe-area-inset-left, 0px));
-    padding-inline-end: max(14px, env(safe-area-inset-right, 0px));
-  }
-  .cr-page,
-  .cr-page.is-wide {
-    min-width: 0;
-    max-width: 100%;
-    padding-inline-start: max(14px, env(safe-area-inset-left, 0px));
-    padding-inline-end: max(14px, env(safe-area-inset-right, 0px));
-    padding-block-end: 24px;
-  }
   .cr-wish-detail,
   .cr-issues-panel,
   .cr-inspector { padding-block-end: calc(20px + var(--app-shell-content-bottom-clearance)); }
