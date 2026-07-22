@@ -1,11 +1,13 @@
 import { Archive, Copy, MoreHorizontal, Printer, Search, Settings2, Trash2 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import type { GeneratedSchedule, ScheduleStatus } from "../../../domain/schedule/types";
+import type { LanguageCode } from "../../components/NavMenu";
 import { TopLevelPageLayout } from "../components/PageLayout";
 import { ScheduleMiniPreview } from "../components/ScheduleMiniPreview";
 import { formatPeriod, statusLabel } from "../scheduleUtils";
 
 interface Props {
+  language: LanguageCode;
   notification: ReactNode;
   schedules: GeneratedSchedule[];
   onCreate: () => void;
@@ -19,14 +21,14 @@ interface Props {
 
 type Filter = "all" | ScheduleStatus;
 
-export function SchedulesPage({ notification, schedules, onCreate, onOpen, onEdit, onPrint, onDuplicate, onArchive, onRemove }: Props) {
+export function SchedulesPage({ language, notification, schedules, onCreate, onOpen, onEdit, onPrint, onDuplicate, onArchive, onRemove }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [menuId, setMenuId] = useState<string | null>(null);
   const visible = schedules.filter(item => (filter === "all" || item.status === filter) && item.name.toLocaleLowerCase("ru").includes(query.trim().toLocaleLowerCase("ru")));
   const filters: Array<[Filter, string]> = [["all", "Все"], ["needs_review", "На проверке"], ["published", "Опубликовано"], ["draft", "Черновики"]];
   return (
-    <TopLevelPageLayout width="list" title="Расписания" description={`${schedules.length} расписаний · данные сохранены локально`} notification={notification} onCreateSchedule={onCreate}>
+    <TopLevelPageLayout page="schedules" language={language} width="list" notification={notification} onCreateSchedule={onCreate}>
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
         <div className="cr-filter-row" style={{ marginBottom: 0 }}>{filters.map(([value, label]) => <button key={value} className={`cr-filter ${filter === value ? "is-active" : ""}`} onClick={() => setFilter(value)}>{label}</button>)}</div>
         <label style={{ position: "relative" }}><Search size={14} style={{ position: "absolute", left: 11, top: 13, color: "var(--cr-muted)" }} /><input className="cr-search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Найти по названию" style={{ paddingLeft: 32 }} /></label>
